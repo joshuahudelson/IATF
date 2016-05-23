@@ -1,6 +1,7 @@
 # IATF_Runner
 
 from random import random
+import numpy as np
 
 class IATF_Runner:
     """ A class for generating lists of IATF output. 
@@ -67,7 +68,7 @@ class IATF_Runner:
         
         # Not sure about this, below, but will leave it for now. 
         self.list_indices = [self.IATF_Object.find_index(self.driver_list[0], init_location)]
-        self.list_scaled_indices = [self.list_indices[0]/float(len(self.list_Differences[0]))]
+        self.list_scaled_indices = [self.list_indices[0] / float(len(self.list_Differences[0]))]
         self.list_Transfer_Functions = [self.IATF_Object.Transfer_Function]
         self.list_concat_TF = [self.IATF_Object.concat_TF(self.list_scaled_indices[0])]
         self.list_concat_Diff = [self.IATF_Object.concat_Diff(self.list_indices[0])]
