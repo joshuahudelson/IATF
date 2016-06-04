@@ -8,7 +8,7 @@ class IATF_Runner:
     """
 
     def __init__(self, 
-                 IATF_Object,
+                 IATF,
                  iters,
                  init_driver=None,
                  driver_species='random',
@@ -19,7 +19,7 @@ class IATF_Runner:
                  location_list=None
                 ):
         """
-        IATF_Object:      Object, passed from outside, so it can be any 
+        IATF:             Object, passed from outside, so it can be any 
                           sub-class of this object that we want 
                           to test.
         iters:            Int, number of times we want to compute 
@@ -27,35 +27,44 @@ class IATF_Runner:
         init_driver:      Float, needed for 'single_value' and 
                           'feedback' species.
         driver_species:   String, what kind of numbers are driving the 
-                          IATF_Object (as arguments to its 
+                          IATF (as arguments to its 
                           compute_next() function)
         stop_if_looping:  Boolean, if True, stop iterating when current
                           state is already in the list being
                           generated.
         driver_list:      List, only used for 'sequence' species.
-                          Used for driving IATF_Object with a
+                          Used for driving IATF with a
                           specific sequence of numbers (i.e. sinusoid)
         location_species: String, what index to treat as 0 when
                           searching the Transfer Function in find_index().
                           'Feedback' means it uses the last index returned.
         location_list:    List, similar to driver_list when 'sequence' is
                           species.  I might not ever get around to using it.
+        loop_index:       Int, index at which the sequence begins being in a
+                          a loop that it will never leave (if driver_species
+                          is set to 'feedback.'
         """
 
-        self.IATF_Object = IATF_Object
+        self.IATF = IATF
         self.iters = iters
+        self.loop_index = None
         
-        if ((driver_species == 'feedback') & 
+        self.SPECIES_FEEDBACK = 'feedback'
+        self.SPECIES_SEQUENCE = 'sequence'
+        self.SPECIES_SINGLE_VALUE = 'single_value'
+        self.SPECIES_RANDOM = 'random'
+
+        if ((driver_species == self.SPECIES_FEEDBACK) & 
            (init_driver == None)):
                raise ValueError("Must provide an init_value!")
 
         self.init_driver = init_driver
 
-        if ((driver_species == 'sequence') &
+        if ((driver_species == self.SPECIES_SEQUENCE) &
            ((driver_list == None) or
             (len(driver_list) != iters))):
             raise ValueError("Driver_list lacking or of wrong length!")
-        if ((driver_species == 'single_value') &
+        if ((driver_species == self.SPECIES_SINGLE_VALUE) &
             (init_driver == None)):
             raise ValueError("Init_driver missing!")
 
@@ -63,35 +72,28 @@ class IATF_Runner:
         self.stop_if_looping = stop_if_looping
         self.driver_list = self.make_driver_list(driver_list)
 
-        self.list_Differences = [self.IATF_Object.Differences]
-        temp_cumsum = np.cumsum(self.list_Differences)
+        self.list_differences = [self.IATF.differences]
+        temp_cumsum = np.cumsum(self.list_differences)
         
         # Not sure about this, below, but will leave it for now. 
-        self.list_indices = [self.IATF_Object.find_index(self.driver_list[0], init_location)]
-        self.list_scaled_indices = [self.list_indices[0] / float(len(self.list_Differences[0]))]
-        self.list_Transfer_Functions = [self.IATF_Object.Transfer_Function]
-        self.list_concat_TF = [self.IATF_Object.concat_TF(self.list_scaled_indices[0])]
-        self.list_concat_Diff = [self.IATF_Object.concat_Diff(self.list_indices[0])]
+        self.list_indices = [self.IATF.find_index(self.driver_list[0], init_location)]
+        self.list_scaled_indices = [self.list_indices[0] / float(len(self.list_differences[0]))]
+        self.list_transfer_functions = [self.IATF.transfer_function]
+
+        temp_index = self.driver_list[0]
+        temp_scaled_index = float(temp_index)/len(self.IATF.transfer_function)
+        self.list_concat_differences = [np.insert(self.IATF.differences, 0, temp_index)]
+        self.list_concat_transfer_function = [np.insert(self.IATF.transfer_function, 0, temp_scaled_index)]
 
     def run_it(self):
         """ Obvious?
         """
         
-        loop_index = self.generate_lists()
+        self.loop_index = self.generate_lists()  # No reason to have this returned, really...
 
-        return({
-                'list_indices':self.list_indices,
-                'list_Differences':self.list_Differences,
-                'list_scaled_indices':self.list_scaled_indices,
-                'list_Transfer_Functions':self.list_Transfer_Functions,
-                'list_concat_TF':self.list_concat_TF,
-                'list_concat_Diff':self.list_concat_Diff,
-                'loop_index':loop_index
-              })
-
-
+        
     def generate_lists(self):
-        """ Drives the IATF_Object some number of times.  
+        """ Drives the IATF some number of times.  
             Stops iterating if the current state has been 
             reached previously. Adds values to all the 
             lists.  Returns the number of iterations that 
@@ -101,25 +103,25 @@ class IATF_Runner:
         loop_index_counter = 0
 
         for i in range(self.iters):
-            x = copy.deepcopy(self.IATF_Object.compute_next(self.driver_list[i]))
+            self.IATF.compute_next(self.driver_list[i])
 
             if self.stop_if_looping==True:
-                if x['list_concat_Diff'] in self.list_concat_Diff:
+                if self.IATF.concat_differences in self.list_concat_differences:
                     return loop_index_counter
                 else:
                     loop_index_counter += 1
 
-            self.list_indices.append(x['index'])
-            self.list_Differences.append(x['Differences'])
-            self.list_scaled_indices.append(x['scaled_index'])
-            self.list_Transfer_Functions.append(x['Transfer_Function'])
-            self.list_concat_TF.append(x['concat_TF'])
-            self.list_concat_Diff.append(x['concat_Diff'])
+            self.list_indices.append(copy.deepcopy(self.IATF.index))
+            self.list_differences.append(copy.deepcopy(self.IATF.differences))
+            self.list_scaled_indices.append(copy.deepcopy(self.IATF.scaled_index))
+            self.list_transfer_functions.append(copy.deepcopy(self.IATF.transfer_function))
+            self.list_concat_transfer_function.append(copy.deepcopy(self.IATF.concat_transfer_function))
+            self.list_concat_differences.append(copy.deepcopy(self.IATF.concat_differences))
 
             # Feedback driver list needs latest index choice in
             # order to drive the next iteration.
-            if self.driver_species == 'feedback':
-                self.driver_list.append(x['scaled_index'])
+            if self.driver_species == self.SPECIES_FEEDBACK:
+                self.driver_list.append(copy.deepcopy(self.IATF.scaled_index))
         
         return loop_index_counter
 
@@ -127,18 +129,18 @@ class IATF_Runner:
     def make_driver_list(self, list):
         """ Depending on the driver_species, make a list of
             values ('iters' in length) that will be used to
-            drive the IATF_Object.  If species is 'feedback'
+            drive the IATF.  If species is 'feedback'
             the subsequent values will be generated as the
             object iterates.
         """
 
-        if self.driver_species == 'random':
+        if self.driver_species == self.SPECIES_RANDOM:
             return(self.make_random_list())
-        elif self.driver_species == 'feedback':
+        elif self.driver_species == self.SPECIES_FEEDBACK:
             return([self.init_driver])
-        elif self.driver_species == 'single_value':
+        elif self.driver_species == self.SPECIES_SINGLE_VALUE:
             return(np.ones(self.iters)*self.init_driver)
-        elif self.driver_species == 'sequence':
+        elif self.driver_species == self.SPECIES_SEQUENCE:
             return(self.driver_list)
 
     def make_random_list(self):
@@ -149,10 +151,9 @@ class IATF_Runner:
         return temp_list
 
 if __name__ == '__main__':
-    #from IATF import IATF
-    x = IATF([1, 1, 1, 1])
-    test_runner = IATF_Runner(x, 10, init_driver=0, driver_species='single_value')
-    results = test_runner.run_it()
+    test_object = IATF([1, 1, 1, 1])
+    test_runner = IATF_Runner(test_object, 10, init_driver=0, driver_species='single_value')
+    test_runner.run_it()
     
-    for i in results['list_concat_Diff']:
+    for i in test_runner.list_concat_differences:
         print(i)
