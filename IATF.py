@@ -57,7 +57,7 @@ class IATF:
         self.index = self.find_index(input_value, location)
         self.update(self.index)
 
-        self.scaled_index = float(self.index)/self.num_elems
+        self.scaled_index = float(self.index)/(self.num_elems-1)
 
 
     def find_index(self, value, location):
@@ -68,7 +68,8 @@ class IATF:
         temp_differences = np.roll(self.differences, amount_to_roll)
         temp_differences = temp_differences**self.exponent
         temp_transfer_function = self.compute_transfer_function(temp_differences)
-        min_diff = np.min(temp_transfer_function[temp_transfer_function.nonzero()])
+        temp_transfer_differences = np.diff(np.insert(temp_transfer_function, 0, 0))
+        min_diff = np.min(temp_transfer_differences[temp_transfer_differences.nonzero()])
 
         if value > 1.0 or value < 0.0:
             raise ValueError('Input value must be between 0 and 1')
@@ -139,4 +140,6 @@ if __name__ == '__main__':
     test_iatf.compute_next(0.25)
     print("Should print 1")
     print(test_iatf.index)
-
+    print(test_iatf.differences)
+    test_iatf.compute_next(0.5)
+    print(test_iatf.differences)

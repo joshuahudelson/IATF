@@ -75,12 +75,11 @@ class IATF_Runner:
         self.list_differences = [self.IATF.differences]
         temp_cumsum = np.cumsum(self.list_differences)
         
-        # Not sure about this, below, but will leave it for now. 
         self.list_indices = [self.IATF.find_index(self.driver_list[0], init_location)]
         self.list_scaled_indices = [self.list_indices[0] / float(len(self.list_differences[0]))]
         self.list_transfer_functions = [self.IATF.transfer_function]
 
-        temp_index = self.driver_list[0]
+        temp_index = self.list_indices[0]
         temp_scaled_index = float(temp_index)/len(self.IATF.transfer_function)
         self.list_concat_differences = [np.insert(self.IATF.differences, 0, temp_index)]
         self.list_concat_transfer_function = [np.insert(self.IATF.transfer_function, 0, temp_scaled_index)]
@@ -100,16 +99,13 @@ class IATF_Runner:
             have been performed.
         """
 
-        loop_index_counter = 0
-
         for i in range(self.iters):
             self.IATF.compute_next(self.driver_list[i])
 
             if self.stop_if_looping==True:
-                if self.IATF.concat_differences in self.list_concat_differences:
-                    return loop_index_counter
-                else:
-                    loop_index_counter += 1
+                temp_loop_test = self.am_i_looping(self.IATF.concat_differences)
+                if temp_loop_test[0]:
+                    return temp_loop_test[1]
 
             self.list_indices.append(copy.deepcopy(self.IATF.index))
             self.list_differences.append(copy.deepcopy(self.IATF.differences))
@@ -123,8 +119,19 @@ class IATF_Runner:
             if self.driver_species == self.SPECIES_FEEDBACK:
                 self.driver_list.append(copy.deepcopy(self.IATF.scaled_index))
         
-        return loop_index_counter
+        return 0
 
+    
+    def am_i_looping(self, array):
+        """ Find out if an array is already in the list of
+            concat_differences.
+        """
+        
+        for i in range(len(self.list_concat_differences)):
+            if np.array_equal(self.list_concat_differences[i], array):
+                return (True, i)
+        return (False, 0)
+    
     
     def make_driver_list(self, list):
         """ Depending on the driver_species, make a list of
@@ -150,10 +157,12 @@ class IATF_Runner:
         temp_list = [np.random.rand() for _ in range(self.iters)]
         return temp_list
 
+
+
 if __name__ == '__main__':
     test_object = IATF([1, 1, 1, 1])
-    test_runner = IATF_Runner(test_object, 10, init_driver=0, driver_species='single_value')
-    test_runner.run_it()
-    
-    for i in test_runner.list_concat_differences:
-        print(i)
+    test_runner = IATF_Runner(test_object, 20, init_driver=0.5, driver_species='feedback')
+    print(test_runner.driver_list)
+    print(test_runner.list_scaled_indices)
+    print(test_runner.list_concat_differences)
+    print(test_runner.list_concat_transfer_function)
