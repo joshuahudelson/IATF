@@ -1,25 +1,77 @@
 from random import randint
 
 class Feedback_Multi_Run:
+    """ A class for generating multiple lists
+        of output from IATF_Runners, each
+        starting with a unique start_point,
+        and consolidating the information from 
+        those lists.
+    """
     
-    def __init__(self, num_elems, exponent, num_runs, iters, max_value=None, stop_if_looping=True):
+    def __init__(self, 
+                 num_elems, 
+                 exponent, 
+                 num_runs, 
+                 iters, 
+                 max_value=None
+                ):
+        """
+        num_elems:    Int, the length of the array that will
+                      become the differences and transfer_function 
+                      in the IATF object.
+        exponent:     Int or float, the exponent to which
+                      the differences in the IATF object
+                      will be raised before the transfer_
+                      function is calculated.
+        num_runs:     Int, the number of different lists to be
+                      produced (each by an IATF_Runner).
+        iters:        Int, the number of iterations each IATF_
+                      Runner should do before stopping.
+        max_value:    Int, The maximum value any of the differences
+                      in the start_point.
+        ---
+        list_of_runs: List, dicts containing all the state information
+                      from each run (of an IATF_Runner), plus an int to
+                      which loop in list_loops that run falls into.
+        list_of_start_points:
+                      List, numpy arrays describing the complete state
+                      of an IATF object: current driver (int) and current
+                      differences (ints) concatenated into numpy array.
+        list_loops:   A list containing a list of each unique loop
+                      encountered in list_of_runs.
+        num_unique_loops:
+                      The number of loops in list_loops.
+        lengths_of_unique_loops:
+                      A list of the lengths of the loops in
+                      list_loops.
+        lengths_of_pre_loops:
+                      A list of the lengths of the pre_loops,
+                      one for each run in list_of_runs.
+        avg_length_of_pre_loop:
+                      The mean of lengths_of_pre_loops.
+        num_looping_vs_not:
+                      List, ints describing how many runs
+                      ended in a loop and how many didn't.
+        """
         
-        self.num_runs = num_runs
         self.num_elems = num_elems
-        self.iters = iters
         self.exponent = exponent
-        
+        self.num_runs = num_runs
+        self.iters = iters
+      
         if max_value == None:
             self.max_value = num_elems
         else:
             self.max_value = max_value
         
         self.list_of_runs = []
+
         self.list_of_start_points = []
         self.generate_unique_start_points()
         
         self.list_loops = []
-
+        self.num_looping_vs_not = [0, 0]
+        
         # Crunch Numbers variables
         self.num_unique_loops = None
         self.lengths_of_unique_loops = []
@@ -28,6 +80,16 @@ class Feedback_Multi_Run:
 
 
     def run_it(self):
+        """  Split start_point into driver and
+             array.  Use array to build IATF and
+             pass it to IATF_Runner, then run.
+             While running, check for loops and
+             determine which loop each run falls
+             into.  Save data from each run in
+             list_of_runs.  When finished,
+             crunch_numbers() to get general
+             info about list_of_runs.
+        """
         
         for i in range(self.num_runs):
             
@@ -43,9 +105,11 @@ class Feedback_Multi_Run:
             loop_status = my_IATF_Runner.loop_status_boolean
             
             if loop_status is False:
+                self.num_looping_vs_not[1] += 1
                 the_loop = [None]
                 loop_number = None
             else:
+                self.num_looping_vs_not[0] += 1
                 the_loop = my_IATF_Runner.list_concat_differences[loop_index:]
                 loop_number = self.check_add_loop_list(the_loop)
 
@@ -69,18 +133,31 @@ class Feedback_Multi_Run:
             index 0; driver selected from range 0 to num_elems.
         """
         
-        while len(self.list_of_start_points) < self.num_runs: # Will need to raise exception if num_runs
-                                                              # is larger than possible permutations
+        while len(self.list_of_start_points) < self.num_runs: 
             
-            temp_start_point = [randint(0, self.max_value) for _ in range(self.num_elems)]
-            temp_init_driver = randint(0, self.num_elems-1)
-            temp_start_point.insert(0, temp_init_driver)
+            # Can't create more unique start_points than mathematically possible:
+            max_num_runs_possible = self.max_value**self.num_elems+1
             
-            if temp_start_point not in self.list_of_start_points:  # No repeats
-                self.list_of_start_points.append(temp_start_point)
-
+            if self.num_runs > max_num_runs_possible:
+                raise ValueError("num_runs larger that max possible list of start_points")
+            else:
+            
+                temp_start_point = [randint(0, self.max_value) for _ in range(self.num_elems)]
+                temp_init_driver = randint(0, self.num_elems-1)
+                temp_start_point.insert(0, temp_init_driver)
                 
+                if temp_start_point not in self.list_of_start_points:  # No repeats
+                    self.list_of_start_points.append(temp_start_point)
+        
+   
     def check_add_loop_list(self, loop):
+        """If no loops are in list_loops, add the current one
+           Otherwise, check if one element of a loop is already 
+           in one of the existing loops.  If so, loop has
+           already been encountered, so return index of
+           that loop.  If not, add new loop to list_loops
+           and return index of new loop.
+        """
         
         temp_length = len(self.list_loops)
         
@@ -97,6 +174,14 @@ class Feedback_Multi_Run:
             
 
     def crunch_numbers(self):
+        """ Using data in list_loops, determine
+            how many unique loops have been found
+            how long each is, how long each of the
+            pre_loops is (all pre-loops will be unique,
+            so there will be one for each run), and
+            what the average length of the pre_loops
+            is.
+        """
         
         self.num_unique_loops = len(self.list_loops)
         
@@ -110,9 +195,8 @@ class Feedback_Multi_Run:
 
 
 if __name__=='__main__':
-    x = Feedback_Multi_Run(6, 20, 10, 100, max_value=10, stop_if_looping=True)
+    x = Feedback_Multi_Run(6, 4, 10, 100, max_value=10)
     x.run_it()
-    print("---")
     for i in x.list_loops:
         print i
     print("-----")
@@ -120,3 +204,4 @@ if __name__=='__main__':
     print(x.lengths_of_unique_loops)
     print(x.lengths_of_pre_loops)
     print(x.avg_length_of_pre_loop)
+    print(x.num_looping_vs_not)
