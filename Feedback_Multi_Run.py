@@ -17,6 +17,14 @@ class Feedback_Multi_Run:
         self.list_of_runs = []
         self.list_of_start_points = []
         self.generate_unique_start_points()
+        
+        self.list_loops = []
+
+        # Crunch Numbers variables
+        self.num_unique_loops = None
+        self.lengths_of_unique_loops = []
+        self.lengths_of_pre_loops = []
+        self.avg_length_of_pre_loop = None
 
 
     def run_it(self):
@@ -31,7 +39,16 @@ class Feedback_Multi_Run:
             my_IATF_Runner.run_it()
             
             loop_index = my_IATF_Runner.loop_index
-            the_loop = my_IATF_Runner.list_concat_differences[loop_index:]
+            
+            loop_status = my_IATF_Runner.loop_status_boolean
+            
+            if loop_status is False:
+                the_loop = [None]
+                loop_number = None
+            else:
+                the_loop = my_IATF_Runner.list_concat_differences[loop_index:]
+                loop_number = self.check_add_loop_list(the_loop)
+
             pre_loop = my_IATF_Runner.list_concat_differences[:loop_index]
             
             self.list_of_runs.append({'run_index':i,
@@ -41,7 +58,10 @@ class Feedback_Multi_Run:
                                       'loop_index':loop_index,
                                       'len_loop':len(the_loop),
                                       'len_pre_loop':len(pre_loop),
-                                      'unique_loop_point':the_loop[0]})
+                                      'loop_status':loop_status,
+                                      'loop_number':loop_number})
+            
+        self.crunch_numbers()
     
     
     def generate_unique_start_points(self):
@@ -58,23 +78,45 @@ class Feedback_Multi_Run:
             
             if temp_start_point not in self.list_of_start_points:  # No repeats
                 self.list_of_start_points.append(temp_start_point)
-                     
-"""         
+
+                
+    def check_add_loop_list(self, loop):
+        
+        temp_length = len(self.list_loops)
+        
+        if temp_length < 1:
+            self.list_loops.append(loop)
+            return 0
+        else:
+            for i in range(temp_length):
+                for j in self.list_loops[i]:
+                    if np.array_equal(j, loop[0]):
+                        return i
+        self.list_loops.append(loop)
+        return temp_length-1
+            
+
     def crunch_numbers(self):
-        unique loops
-        lengths of unique loops
-        unique points in those loops
         
-        longest pre-loop lenghth
-        shortest pre-loop length
+        self.num_unique_loops = len(self.list_loops)
         
-        And THEN it needs to go through the original list of dictionaries and designate which loop (0, 1, 2...)
-        each belongs to.  No, actually, do this AS it's running...by keeping an ongoing list of the loops and
-        checking each time.
-"""
+        for i in self.list_loops:
+            self.lengths_of_unique_loops.append(len(i))
+        
+        for i in self.list_of_runs:
+            self.lengths_of_pre_loops.append(len(i['pre_loop']))
+        
+        self.avg_length_of_pre_loop = sum(self.lengths_of_pre_loops)/len(self.lengths_of_pre_loops)
+
+
 if __name__=='__main__':
-    x = Feedback_Multi_Run(5, 1, 3, 30, max_value=10, stop_if_looping=True)
-    print(x.list_of_start_points)
+    x = Feedback_Multi_Run(6, 20, 10, 100, max_value=10, stop_if_looping=True)
     x.run_it()
-    for i in x.list_of_runs:
-        print(i)
+    print("---")
+    for i in x.list_loops:
+        print i
+    print("-----")
+    print(x.num_unique_loops)
+    print(x.lengths_of_unique_loops)
+    print(x.lengths_of_pre_loops)
+    print(x.avg_length_of_pre_loop)
