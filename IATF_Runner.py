@@ -38,11 +38,16 @@ class IATF_Runner:
         location_species: String, what index to treat as 0 when
                           searching the Transfer Function in find_index().
                           'Feedback' means it uses the last index returned.
+        init_location:    Int, which index the IATF object should treat as 0 
+                          when doing the first call of run_it()
         location_list:    List, similar to driver_list when 'sequence' is
                           species.  I might not ever get around to using it.
         loop_index:       Int, index at which the sequence begins being in a
                           a loop that it will never leave (if driver_species
                           is set to 'feedback.'
+        loop_status_boolean:
+                          Boolean, whether the list being generated has
+                          started looping.  Default is False.
         """
 
         self.IATF = IATF
@@ -84,17 +89,23 @@ class IATF_Runner:
         self.list_concat_differences = [np.insert(self.IATF.differences, 0, temp_index)]
         self.list_concat_transfer_function = [np.insert(self.IATF.transfer_function, 0, temp_scaled_index)]
 
+        self.loop_status_boolean = False
+        
     def run_it(self):
-        """ Obvious?
+        """ Call generate_lists, which creates the lists
+            of IATF output, and assign the loop_index with
+            what it returns.  This could be collapsed into
+            generate_lists.
         """
         
-        self.loop_index = self.generate_lists()  # No reason to have this returned, really...
+        self.loop_index = self.generate_lists()
 
         
     def generate_lists(self):
         """ Drives the IATF some number of times.  
             Stops iterating if the current state has been 
-            reached previously. Adds values to all the 
+            reached previously and turns loop_status_boolean
+            to True. Adds values to all the 
             lists.  Returns the number of iterations that 
             have been performed.
         """
@@ -105,8 +116,9 @@ class IATF_Runner:
             if self.stop_if_looping==True:
                 temp_loop_test = self.am_i_looping(self.IATF.concat_differences)
                 if temp_loop_test[0]:
+                    self.loop_status_boolean = temp_loop_test[0]
                     return temp_loop_test[1]
-
+                
             self.list_indices.append(copy.deepcopy(self.IATF.index))
             self.list_differences.append(copy.deepcopy(self.IATF.differences))
             self.list_scaled_indices.append(copy.deepcopy(self.IATF.scaled_index))
@@ -150,13 +162,13 @@ class IATF_Runner:
         elif self.driver_species == self.SPECIES_SEQUENCE:
             return(self.driver_list)
 
+
     def make_random_list(self):
         """ Make a list of random floats between 0 and 1
         """
 
         temp_list = [np.random.rand() for _ in range(self.iters)]
         return temp_list
-
 
 
 if __name__ == '__main__':
