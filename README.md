@@ -1,40 +1,44 @@
-Iteratively-Adjusted Transfer Functions
+# Iteratively-Adjusted Transfer Functions
+-------------------------
 
-The following is mainly relevant to the Feedback_ Multi_Runs object:
+## Introduction
 
-Consider a multidimensional point [a, b, ..., z] that describes the state of a system.  The term at index 0 ("a") will be called the "driver," while the remaining terms ("b" through "z") will be called the "differences."
+The goal of this project is to investigate how different initial states end up in different periodic orbits, and also to investigate how this changes when different adjustment algorithms are used.
 
-The driver will always be a value between 0 and the number of elements in differences minus 1.  The values of differences, however, can be between 0 and infinity.
+Consider a point in n-dimensional space `[a, b, ..., z]` that describes the state of a system. The term at index 0 ("a") will be called the "driver," while the remaining terms ("b" through "z") will be called the "differences."
 
-The system arrives at subsequent states by treating the driver as some percentage of the cumulative sum of the differences, and the returning the index of differences at which that value can be found.
+The driver will always be a value between 0 and the number of elements in differences minus 1. The values of differences, are non-negative reals.
 
-Specifically, driver is turned into a fraction by dividing it by its maximum possible value (the number of elements in differences minus 1) and then multiplying it with the total sum of differences.  The resulting value is then "found" within the array of cumulative sums of differences, and the index 
+The system arrives at subsequent states by treating the driver as some percentage of the cumulative sum of the differences, and returning the indices of differences at which that value can be found.
 
-For example, start with the point [2, 1, 1, 3, 1]
+Specifically, driver is turned into a fraction by dividing it by its maximum possible value (the number of elements in differences minus 1) and then multiplying it with the total sum of differences.  The resulting value is then "found" within the array of cumulative sums of differences, and the index is returned.
 
+The previous discussion is mainly relevant to the `Feedback_Multi_Runs` class.
+
+## Example run
+
+Start with the point [2, 1, 1, 3, 1], where
+
+```
 driver = 2
-
+num_differences = 4
 differences = [1, 1, 3, 1]
+total_diff_sum = 6
+cumulative_diff_sum = [1, 2, 5, 6]
+```
 
-total sum of differences = 6
+The fractional value derived from `driver` is
+```
+frac_driver = driver / num_differences # 0.5.
+```
 
-cumulative sum of differences = [1, 2, 5, 6]
+The percentage of cumulative differences is then
+```
+percentage = frac_driver * total_diff_sum # 3
+```
 
-driver turned into fraction = 0.5 (2 / number of elements of differences)
+Now we look for the first element in `cumulative_diff_sum` whose corresponding value is greater than `percentage`, in this case it's `2`.
 
-driver * total sum of differences = 3
-
-3 <= [1, 2, 5, 6] = 2 (first index at which value is greater than 3)
-
-This process yields a new driver: 2.  What remains to be done is to adjust the differences in some way.  Here, I borrow from the "Statistical Feedback" algorithm, which increments each element of differences by 1 and sets the chosen index to zero.  The resulting state of the system would then be:
-
-[2, 2, 2, 0, 2]
+This process yields a new driver: `2`.  What remains to be done is to adjust the differences in some way.  Here, I borrow from the "Statistical Feedback" algorithm, which increments each element of differences by 1 and sets the chosen index to zero.  The resulting state of the system would then be: `[2, 2, 2, 0, 2]`.
 
 Typically, the system eventually ends up in a periodic orbit of some small number of states.
-
-The goal of this project is to investigate how different initial states end up in difference periodic orbits, and also to investigate how this changes when different adjustment algorithms are used.
-
-
-
-
-
