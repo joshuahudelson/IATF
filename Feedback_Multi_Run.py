@@ -1,6 +1,9 @@
 from random import randint
 from IATF_Runner import IATF_Runner
+from IATF import IATF
 import numpy as np
+
+from operator import itemgetter
 
 class Feedback_Multi_Run:
     """ A class for generating multiple lists
@@ -79,6 +82,7 @@ class Feedback_Multi_Run:
         self.lengths_of_unique_loops = []
         self.lengths_of_pre_loops = []
         self.avg_length_of_pre_loop = None
+        self.starts_by_loop = []
 
 
     def run_it(self):
@@ -195,15 +199,30 @@ class Feedback_Multi_Run:
         
         self.avg_length_of_pre_loop = sum(self.lengths_of_pre_loops)/len(self.lengths_of_pre_loops)
 
+        temp_starts_by_loop = []
+
+        for _ in range(self.num_unique_loops):
+            temp_starts_by_loop.append([])
+
+        for i in self.list_of_runs:
+            temp_starts_by_loop[i['loop_number']].append(i['start_point'])
+
+        for i in temp_starts_by_loop:
+            self.starts_by_loop.append(sorted(i, key=itemgetter(0)))
+            
+
 
 if __name__=='__main__':
-    x = Feedback_Multi_Run(6, 4, 10, 100, max_value=10)
+    num_elems = 7
+    exponent = 1
+    num_runs = 20
+    num_iters = 200
+    max_value = 10
+
+    x = Feedback_Multi_Run(num_elems, exponent, num_runs, num_iters, max_value=max_value)
     x.run_it()
-    for i in x.list_loops:
-        print i
-    print("-----")
-    print(x.num_unique_loops)
-    print(x.lengths_of_unique_loops)
-    print(x.lengths_of_pre_loops)
-    print(x.avg_length_of_pre_loop)
-    print(x.num_looping_vs_not)
+
+    for i in x.starts_by_loop:
+        for j in i:
+            print(str(j) + '\t' + str(np.cumsum(j[1:])))
+        print('')

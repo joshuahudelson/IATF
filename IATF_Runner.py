@@ -2,6 +2,7 @@
 
 from random import random
 import numpy as np
+import copy
 
 class IATF_Runner:
     """ A class for generating lists of IATF output. 
