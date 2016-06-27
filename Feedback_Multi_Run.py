@@ -2,6 +2,7 @@ from random import randint
 from IATF_Runner import IATF_Runner
 from IATF import IATF
 import numpy as np
+import matplotlib.pyplot as plt
 
 from operator import itemgetter
 
@@ -57,6 +58,17 @@ class Feedback_Multi_Run:
         num_looping_vs_not:
                       List, ints describing how many runs
                       ended in a loop and how many didn't.
+        ---
+        starts_by_loop:
+                      List, sublists of start_points collated
+                      by which loop they end up in.
+        starts_by_loop_driver:
+                      List, same as starts_by_loop, but with
+                      post-first-iteration driver as
+                      index 0.
+        starts_by_loop_driver_diffs:
+                      List, same as starts_by_loop_driver but
+                      with diffs for [2:] rather than cumsums.
         """
         
         self.num_elems = num_elems
@@ -82,7 +94,8 @@ class Feedback_Multi_Run:
         self.lengths_of_unique_loops = []
         self.lengths_of_pre_loops = []
         self.avg_length_of_pre_loop = None
-        self.starts_by_loop = []
+        #---
+        self.starts_by_loop_driver = []
 
 
     def run_it(self):
@@ -198,31 +211,3 @@ class Feedback_Multi_Run:
             self.lengths_of_pre_loops.append(len(i['pre_loop']))
         
         self.avg_length_of_pre_loop = sum(self.lengths_of_pre_loops)/len(self.lengths_of_pre_loops)
-
-        temp_starts_by_loop = []
-
-        for _ in range(self.num_unique_loops):
-            temp_starts_by_loop.append([])
-
-        for i in self.list_of_runs:
-            temp_starts_by_loop[i['loop_number']].append(i['start_point'])
-
-        for i in temp_starts_by_loop:
-            self.starts_by_loop.append(sorted(i, key=itemgetter(0)))
-            
-
-
-if __name__=='__main__':
-    num_elems = 7
-    exponent = 1
-    num_runs = 20
-    num_iters = 200
-    max_value = 10
-
-    x = Feedback_Multi_Run(num_elems, exponent, num_runs, num_iters, max_value=max_value)
-    x.run_it()
-
-    for i in x.starts_by_loop:
-        for j in i:
-            print(str(j) + '\t' + str(np.cumsum(j[1:])))
-        print('')
