@@ -32,19 +32,23 @@ class Grapher:
             It also shows which element of each graph will
             be chosen by that driver on the first iteration
             (as a scatter-plot point).
+
+            Assumes self.feedback_multi_runs has already run.
         """
         pdf = PdfPages('multipage.pdf')
 
         temp_range = np.arange(num_elems)
-        for i in self.feedback_multi_runs.list_of_runs:
-            plt.figure(i['loop_number'])
-            plt.subplot(num_elems, 1, i['start_point'][0])
-            plt.plot(temp_range, i['start_point'][1:])
-            plt.ylabel(str(i['start_point'][0]))
-            temp_x_val = i['pre_loop'][1][0]
-            plt.scatter(temp_x_val, i['start_point'][temp_x_val+1])
+        for run in self.feedback_multi_runs.list_of_runs:
+            plt.figure(run['loop_number'])
+            print(num_elems)
+            print(run['start_point'][0])
+            plt.subplot(num_elems, 1, run['start_point'][0])
+            plt.plot(temp_range, run['start_point'][1:])
+            plt.ylabel(str(run['start_point'][0]))
+            temp_x_val = run['pre_loop'][1][0]
+            plt.scatter(temp_x_val, run['start_point'][temp_x_val + 1])
 
-        for i in range(self.feedback_multi_runs.num_unique_loops-1):
+        for i in range(self.feedback_multi_runs.num_unique_loops - 1):
             plt.figure(i)
             plt.savefig(pdf, format='pdf')
 
