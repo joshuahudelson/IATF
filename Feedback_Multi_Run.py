@@ -203,7 +203,8 @@ class Feedback_Multi_Run:
         """
         self.num_unique_loops = len(self.list_loops)
         self.lens_unique_loops = [len(loop) for loop in self.list_loops]
-        lens_pre_loops = [len(run['pre_loop']) for run in
+        self.lens_pre_loops = [len(run['pre_loop']) for run in
                           self.list_of_runs]
 
-        self.avg_len_pre_loop = sum(lens_pre_loops)/len(self.lens_pre_loops)
+        self.avg_len_pre_loop = sum(self.lens_pre_loops)/(len(self.lens_pre_loops) + 0.01)
+        # to prevent dividing by zero for cases in which the pre_loop length is 0
