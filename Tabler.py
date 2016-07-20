@@ -51,6 +51,28 @@ def Tabler_Num_Loops(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
                       'Average Length of Pre-Loop']
 
     for i in range(3):
+        temp_exp = exp_low
+        textfile = open('File' + str(i), 'w')
+        textfile.write(list_of_titles[i])
+        textfile.write('\n')
+        textfile.write('\n')
+        textfile.write('\t\t')
+        for j in range(num_elems_low, num_elems_high):
+            textfile.write(str(j) + '\t\t')
+        textfile.write('\n')   
+        for row in list_of_data[i]:
+            textfile.write('\n')
+            textfile.write(str(temp_exp) + '\t\t')
+            temp_exp += exp_step
+            for item in row:
+                textfile.write(str(item) + '\t\t')
+    textfile.close()
+
+                
+
+
+"""
+    for i in range(3):
         
         fig = plt.figure(i)
         ax=plt.gca()
@@ -66,17 +88,17 @@ def Tabler_Num_Loops(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
         plt.text(12,3.4,'Table Title',size=8)
 
     plt.show()
-
+"""
 
 def run_test():
     num_elem_low = 4
-    num_elem_high = 12
+    num_elem_high = 11
 
     exp_low = 1
-    exp_high = 10
+    exp_high = 15
     exp_step = 0.25
 
-    num_runs = 70
+    num_runs = 100
     num_iters = 10000
     max_value = 10
 
