@@ -18,6 +18,7 @@ def Tabler_Num_Loops(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
     unique_lengths = []
     len_unique_lengths = []
     avg_len_pre_loop = []
+    did_it_loop = []
 
     col_labels=[]
     row_labels=[]
@@ -30,6 +31,7 @@ def Tabler_Num_Loops(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
         #unique_lengths.append([])   CHANGE TO AVG. LENGTH OF LOOP (and add a standard deviation?)
         len_unique_lengths.append([])
         avg_len_pre_loop.append([])  #ADD STANDARD DEVIAITON?
+        did_it_loop.append([])
 
         for num_elem in range(num_elems_low, num_elems_high):
             
@@ -42,15 +44,16 @@ def Tabler_Num_Loops(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
             #unique_lengths[len(unique_lengths)-1].append(result.lens_unique_loops)
             len_unique_lengths[len(len_unique_lengths)-1].append(len(result.lens_unique_loops))
             avg_len_pre_loop[len(avg_len_pre_loop)-1].append(round(result.avg_len_pre_loop, 3))
+            did_it_loop[len(did_it_loop)-1].append(result.num_looping_vs_not[1])  # If it's 0, then all runs ended up looping
             
     list_of_data = [num_unique_loops, #unique_lengths,
-                    len_unique_lengths, avg_len_pre_loop]
+                    len_unique_lengths, avg_len_pre_loop, did_it_loop]
 
     list_of_titles = ['Number of Unique Loops',
                       'Number of Unique Loop Lengths',
-                      'Average Length of Pre-Loop']
+                      'Average Length of Pre-Loop', 'Did It Loop?']
 
-    for i in range(3):
+    for i in range(4):
         temp_exp = exp_low
         textfile = open('File' + str(i), 'w')
         textfile.write(list_of_titles[i])
@@ -92,10 +95,10 @@ def Tabler_Num_Loops(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
 
 def run_test():
     num_elem_low = 4
-    num_elem_high = 11
+    num_elem_high = 10
 
     exp_low = 1
-    exp_high = 15
+    exp_high = 10
     exp_step = 0.25
 
     num_runs = 100
