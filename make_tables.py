@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
-from Feedback_Multi_Run import Feedback_Multi_Run
+from Feedback_Multi_Run import Feedback_Multi_Run_with_Condition
 import numpy as np
 
 
 def make_tables(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
-           num_runs, num_iters, max_value):
+           num_runs, num_iters, max_value, multiplier, break_off, init_batch):
     """ This function generates text files that collect the
         output of numerous Feedback_Multi_Runs, one for each
         combination of num_elems and exponent.  Each text
@@ -38,6 +38,8 @@ def make_tables(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
 
     for exp in np.arange(exp_low, exp_high, exp_step):
 
+        print("EXPONENT: " + str(exp))
+
         num_unique_loops.append([])
         avg_len_loop.append([])
         std_loop.append([])
@@ -47,11 +49,18 @@ def make_tables(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
         did_it_loop.append([])
 
         for num_elem in range(num_elems_low, num_elems_high):
+
+            print("Elem: " + str(num_elem))
             
             col_labels.append(str(num_elem))
 
-            result = Feedback_Multi_Run(num_elem, exp, num_runs, num_iters, max_value=max_value)
-            result.run_it()
+            max_possible_runs = max_value**num_elem
+
+            if num_runs > max_possible_runs:
+                num_runs = max_possible_runs
+
+            result = Feedback_Multi_Run_with_Condition(num_elem, exp, num_runs, num_iters, max_value=max_value)
+            result.run_it(multiplier, break_off, init_batch)
             
             num_unique_loops[temp_counter].append(result.num_unique_loops)
             avg_len_loop[temp_counter].append(round(np.mean(result.lens_unique_loops), 3))
@@ -87,19 +96,24 @@ def make_tables(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
 
 
 def run_test():
-    num_elem_low = 4
+    num_elem_low = 9
     num_elem_high = 10
 
-    exp_low = 1
-    exp_high = 12
-    exp_step = 0.2
+    exp_low = 6
+    exp_high = 10
+    exp_step = 1
 
-    num_runs = 200
+    num_runs = 10000
     num_iters = 10000
     max_value = 10
 
+    multiplier = 10
+    break_off = 100000
+    init_batch = 500
+
     make_tables(num_elem_low, num_elem_high, exp_low, exp_high,
-                     exp_step, num_runs, num_iters, max_value)
+                    exp_step, num_runs, num_iters, max_value,
+                    multiplier, break_off, init_batch)
 
 
 if __name__ == '__main__':
