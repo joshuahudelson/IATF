@@ -156,19 +156,80 @@ class IATF:
         
         # Needs to convert list of floats to ints,
         # but keeping proportions the same via
-        # greatest commond denominator.
+        # greatest common denominator.
         # But I might not use this at all.
         
         pass
 
 
+# TESTS:
+
 if __name__ == '__main__':
+
+    tally = 0
+    
+    print("Diagnostic Test for IATF... \n")
+    
+    print("Test 1: Compute Transfer Function from Differences.")
     test_iatf = IATF([1, 1, 1, 1])
-    print("Should print 0.25, 0.5, 0.75, 1.0")
-    print(test_iatf.transfer_function)
-    test_iatf.compute_next(0.25)
-    print("Should print 1")
-    print(test_iatf.index)
-    print(test_iatf.differences)
-    test_iatf.compute_next(0.5)
-    print(test_iatf.differences)
+    check_1 = [0.25, 0.5, 0.75, 1.0]
+    print("Starting Differences = [1, 1, 1, 1]")
+    print("Transfer Function should be " + str(check_1))
+    result_1 = test_iatf.transfer_function
+    print(result_1)
+    answer_1 = (list(check_1) == list(result_1))
+    print(answer_1)
+    tally += answer_1
+    print("")
+
+    print("Test 2: Check close-call on first input.")
+    print("Input = 0.2499999")
+    check_2 = 0.000
+    print("Output should be " + str(check_2))
+    test_iatf.compute_next(0.24999)
+    result_2 = test_iatf.scaled_index
+    print(result_2)
+    answer_2 = (check_2 == result_2)
+    print(answer_2)
+    tally += answer_2
+    print("")
+
+    print("Test 3: Check second close-call.")
+    print("Current Differences are: " + str(test_iatf.differences))
+    print("Input = 0.3333333333333334")
+    check_3 = 0.6666666666666666
+    print("Output should be " + str(check_3))
+    test_iatf.compute_next(0.3333333333333334)
+    result_3 = test_iatf.scaled_index
+    print(result_3)
+    answer_3 = (check_3 == result_3)
+    print(answer_3)
+    tally += answer_3
+
+    print("Test 4: Check epsilon.")
+    start_diffs = [1, 1, 1, 1]
+    print("Starting Differences = " + str([1, 1, 1, 1]))
+    test_epsilon = 0.1
+    print("Epsilon = " + str(test_epsilon))
+    test_iatf = IATF(start_diffs)
+    check_4 = [0.0,
+               0.333,
+               0.0,
+               0.333,
+               0.667,
+               0.0,
+               0.333,
+               0.667,
+               0.0,
+               0.333]
+    answer_list = []
+    for i in range(10):
+        test_iatf.compute_next(0.0, epsilon = 0.1)
+        result_4 = test_iatf.scaled_index
+        print(str(check_4[i]) + " == " + str(round(result_4, 3)))
+        answer_4 = check_4[i] == round(result_4, 3)
+        answer_list.append(answer_4)
+    final_4 = sum(answer_list) == 10
+    print(final_4)
+    tally += final_4
+  

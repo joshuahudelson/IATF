@@ -7,7 +7,7 @@ Feedback_Multi_Runs.
 
 """
 
-from Feedback_Multi_Run import Feedback_Multi_Run
+from Feedback_Multi_Run import Feedback_Multi_Run_with_Condition
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
@@ -38,10 +38,9 @@ class Grapher:
         pdf = PdfPages('multipage.pdf')
 
         temp_range = np.arange(num_elems)
+        
         for run in self.feedback_multi_runs.list_of_runs:
             plt.figure(run['loop_number'])
-            print(num_elems)
-            print(run['start_point'][0])
             plt.subplot(num_elems, 1, run['start_point'][0])
             plt.plot(temp_range, run['start_point'][1:])
             plt.ylabel(str(run['start_point'][0]))
@@ -58,13 +57,12 @@ class Grapher:
 
 def main(num_elems, exponent, num_runs, num_iters, max_value):
     """Run stuff."""
-    result = Feedback_Multi_Run(num_elems, exponent, num_runs, num_iters,
+    result = Feedback_Multi_Run_with_Condition(num_elems, exponent, num_runs, num_iters,
                                 max_value=max_value)
     result.run_it()
 
     new_grapher = Grapher(result)
     new_grapher.make_graphs(num_elems)
-
 
 
 if __name__ == '__main__':

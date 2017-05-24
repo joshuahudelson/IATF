@@ -98,16 +98,12 @@ class Feedback_Multi_Run:
         self.starts_by_loop_driver = []
         self.max_length_list_start_points = (self.max_value+1)**self.num_elems
 
+
     def run_it(self):
-        """  Split start_point into driver and
-             array.  Use array to build IATF and
-             pass it to IATF_Runner, then run.
-             While running, check for loops and
-             determine which loop each run falls
-             into.  Save data from each run in
-             list_of_runs.  When finished,
-             crunch_numbers() to get general
-             info about list_of_runs.
+        """ Do the number of runs requested.
+            When finished,
+            crunch_numbers() to get general
+            info about list_of_runs.
         """
 
         for i in range(self.num_runs):
@@ -117,6 +113,14 @@ class Feedback_Multi_Run:
 
 
     def do_one_run(self, index):
+        """ Split start_point into driver and
+            array.  Use array to build IATF and
+            pass it to IATF_Runner, then run.
+            While running, check for loops and
+            determine which loop each run falls
+            into.  Save data from each run in
+            list_of_runs.
+        """
         
         start_point = self.list_of_start_points[index][1:]
         my_init_driver = float(self.list_of_start_points[index][0])/(self.num_elems-1)
@@ -151,11 +155,12 @@ class Feedback_Multi_Run:
                                   'loop_number':loop_number})
 
 
-
     def generate_unique_start_points(self):
         """ Create a list of unique start_points, including an init_driver at
             index 0; driver selected from range 0 to num_elems.
         """
+
+        repeats = 0
 
         while len(self.list_of_start_points) < self.num_runs:
 
@@ -165,13 +170,16 @@ class Feedback_Multi_Run:
             if self.num_runs > max_num_runs_possible:
                 raise ValueError("num_runs larger that max possible list of start_points")
             else:
-
                 temp_start_point = [randint(0, self.max_value) for _ in range(self.num_elems)]
                 temp_init_driver = randint(0, self.num_elems-1)
                 temp_start_point.insert(0, temp_init_driver)
 
                 if temp_start_point not in self.list_of_start_points:  # No repeats
                     self.list_of_start_points.append(temp_start_point)
+                else:
+                    repeats += 1
+
+        print('There have been ' + str(repeats) + ' repeats.')
 
 
     def check_add_loop_list(self, loop):
@@ -217,10 +225,15 @@ class Feedback_Multi_Run:
 
 #-----------------------------------------------------------------
 
+"""
+Instead of making a complete list of start points before running,
+this produces them on the fly.  It also checks to see if it has done enough runs
+to feel confident that it has found most of the unique loops in existence.
+"""
 
 class Feedback_Multi_Run_with_Condition(Feedback_Multi_Run):
 
-    def run_it(self, multiplier, run_max, init_batch):
+    def run_it(self, threshold):
         """  Split start_point into driver and
              array.  Use array to build IATF and
              pass it to IATF_Runner, then run.
@@ -235,23 +248,37 @@ class Feedback_Multi_Run_with_Condition(Feedback_Multi_Run):
         run_counter = 0
         temp_num_unique_loops = 0
 
-        for i in range(init_batch):
-            self.do_one_run(i)
-        self.crunch_numbers()
-        run_counter += init_batch
+        """ This needs to take two things into account, I think:
+                - the ratio between total number tested and number of unique loops
+                - the total number tested itself (in some form, as the "sample size")
+                
+                Well, not sure.  Maybe just the ratio is necessary.
+                
+                And then there's the maximum number of test points.  Can I use that?
+                
+                Let's just try a simple one:
+                - the ratio of unique loops to total tests should be: 0.05 (1/200). 
+        """
 
-        
-        while (self.num_unique_loops > temp_num_unique_loops) and (run_counter < run_max):
-              temp_num_unique_loops = self.num_unique_loops
-              print("Loops so far: " + str(temp_num_unique_loops))
-              temp_batch = temp_num_unique_loops * multiplier
-              for i in range(temp_batch):
-                  self.do_one_run(i)
-              run_counter += temp_batch
-              self.crunch_numbers()
+        self.do_one_run(0)
+        run_counter += 1
+        self.crunch_numbers()
+ 
+ 
+        # Condition
+        while (self.num_unique_loops/run_counter > threshold) and (run_counter < self.max_length_list_start_points):
+            self.do_one_run(run_counter)
+            run_counter += 1
+            self.crunch_numbers()
+            if (run_counter%1000 == 0):
+                print("Loops so far: " + str(self.num_unique_loops))
 
 
     def do_one_run(self, index):
+        """ Generate a single new start point and make an IATF
+            object with it.  Make an IATF_Runner and run
+            it on the IATF.  
+        """
 
         self.generate_one_new_start_point()
         current_index = len(self.list_of_start_points)-1
@@ -301,10 +328,13 @@ class Feedback_Multi_Run_with_Condition(Feedback_Multi_Run):
             temp_start_point = self.generate_random_start_point()
 
             while(temp_start_point in self.list_of_start_points):
+                print('Made a start-point I already made!  It is: ' + str(temp_start_point))
                 temp_start_point = self.generate_random_start_point()
 
             self.list_of_start_points.append(temp_start_point)
 
         else:
             raise ValueError("WARNING!  MAXIMUM STARTING POINTS REACHED!")
+
+
 

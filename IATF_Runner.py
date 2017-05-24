@@ -91,7 +91,8 @@ class IATF_Runner:
         self.list_concat_transfer_function = [np.insert(self.IATF.transfer_function, 0, temp_scaled_index)]
 
         self.loop_status_boolean = False
-        
+
+
     def run_it(self):
         """ Call generate_lists, which creates the lists
             of IATF output, and assign the loop_index with
@@ -108,7 +109,7 @@ class IATF_Runner:
             reached previously and turns loop_status_boolean
             to True. Adds values to all the 
             lists.  Returns the number of iterations that 
-            have been performed.
+            have been performed (or 0 if it doesn't loop).
         """
 
         for i in range(self.iters):
