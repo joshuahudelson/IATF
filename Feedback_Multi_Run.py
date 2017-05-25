@@ -53,8 +53,6 @@ class Feedback_Multi_Run:
         lens_pre_loops:
                       A list of the lengths of the pre_loops,
                       one for each run in list_of_runs.
-        avg_length_of_pre_loop:
-                      The mean of lens_pre_loops.
         num_looping_vs_not:
                       List, ints describing how many runs
                       ended in a loop and how many didn't.
@@ -93,7 +91,6 @@ class Feedback_Multi_Run:
         self.num_unique_loops = 0
         self.lens_unique_loops = []
         self.lens_pre_loops = []
-        self.avg_len_pre_loop = None
         #---
         self.starts_by_loop_driver = []
         self.max_length_list_start_points = (self.max_value+1)**self.num_elems
@@ -218,9 +215,6 @@ class Feedback_Multi_Run:
         self.lens_unique_loops = [len(loop) for loop in self.list_loops]
         self.lens_pre_loops = [len(run['pre_loop']) for run in
                           self.list_of_runs]
-
-        self.avg_len_pre_loop = sum(self.lens_pre_loops)/(len(self.lens_pre_loops) + 0.01)
-        # to prevent dividing by zero for cases in which the pre_loop length is 0
 
 
 #-----------------------------------------------------------------
