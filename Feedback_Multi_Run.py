@@ -82,7 +82,6 @@ class Feedback_Multi_Run:
         self.list_of_runs = []
 
         self.list_of_start_points = []
-        self.generate_unique_start_points()
 
         self.list_loops = []
         self.num_looping_vs_not = [0, 0]
@@ -95,137 +94,6 @@ class Feedback_Multi_Run:
         self.starts_by_loop_driver = []
         self.max_length_list_start_points = (self.max_value+1)**self.num_elems
 
-
-    def run_it(self):
-        """ Do the number of runs requested.
-            When finished,
-            crunch_numbers() to get general
-            info about list_of_runs.
-        """
-
-        for i in range(self.num_runs):
-            self.do_one_run(i)
-
-        self.crunch_numbers()
-
-
-    def do_one_run(self, index):
-        """ Split start_point into driver and
-            array.  Use array to build IATF and
-            pass it to IATF_Runner, then run.
-            While running, check for loops and
-            determine which loop each run falls
-            into.  Save data from each run in
-            list_of_runs.
-        """
-        
-        start_point = self.list_of_start_points[index][1:]
-        my_init_driver = float(self.list_of_start_points[index][0])/(self.num_elems-1)
-
-        my_IATF = IATF(start_point_differences=start_point, exponent=self.exponent)
-        my_IATF_Runner = IATF_Runner(my_IATF, self.iters, init_driver=my_init_driver, driver_species='feedback', stop_if_looping=True)
-        my_IATF_Runner.run_it()
-
-        loop_index = my_IATF_Runner.loop_index
-
-        loop_status = my_IATF_Runner.loop_status_boolean
-
-        if loop_status is False:
-            self.num_looping_vs_not[1] += 1
-            the_loop = [None]
-            loop_number = None
-        else:
-            self.num_looping_vs_not[0] += 1
-            the_loop = my_IATF_Runner.list_concat_differences[loop_index:]
-            loop_number = self.check_add_loop_list(the_loop)
-
-        pre_loop = my_IATF_Runner.list_concat_differences[:loop_index]
-
-        self.list_of_runs.append({'run_index':index,
-                                  'start_point':self.list_of_start_points[index],
-                                  'the_loop':the_loop,
-                                  'pre_loop':pre_loop,
-                                  'loop_index':loop_index,
-                                  'len_loop':len(the_loop),
-                                  'len_pre_loop':len(pre_loop),
-                                  'loop_status':loop_status,
-                                  'loop_number':loop_number})
-
-
-    def generate_unique_start_points(self):
-        """ Create a list of unique start_points, including an init_driver at
-            index 0; driver selected from range 0 to num_elems.
-        """
-
-        repeats = 0
-
-        while len(self.list_of_start_points) < self.num_runs:
-
-            # Can't create more unique start_points than mathematically possible:
-            max_num_runs_possible = self.max_value**self.num_elems+1
-
-            if self.num_runs > max_num_runs_possible:
-                raise ValueError("num_runs larger that max possible list of start_points")
-            else:
-                temp_start_point = [randint(0, self.max_value) for _ in range(self.num_elems)]
-                temp_init_driver = randint(0, self.num_elems-1)
-                temp_start_point.insert(0, temp_init_driver)
-
-                if temp_start_point not in self.list_of_start_points:  # No repeats
-                    self.list_of_start_points.append(temp_start_point)
-                else:
-                    repeats += 1
-
-        print('There have been ' + str(repeats) + ' repeats.')
-
-
-    def check_add_loop_list(self, loop):
-        """If no loops are in list_loops, add the current one
-           Otherwise, check if one element of a loop is already
-           in one of the existing loops.  If so, loop has
-           already been encountered, so return index of
-           that loop.  If not, add new loop to list_loops
-           and return index of new loop.
-        """
-
-        temp_length = len(self.list_loops)
-
-        if temp_length < 1:
-            self.list_loops.append(loop)
-            return 0
-        else:
-            for i in range(temp_length):
-                for j in self.list_loops[i]:
-                    if np.array_equal(j, loop[0]):
-                        return i
-        self.list_loops.append(loop)
-        return temp_length-1
-
-
-    def crunch_numbers(self):
-        """ Using data in list_loops, determine
-            how many unique loops have been found,
-            how long each is, how long each of the
-            pre_loops is (all pre-loops will be unique,
-            so there will be one for each run), and
-            what the average length of the pre_loops
-            is.
-        """
-        self.num_unique_loops = len(self.list_loops)
-        self.lens_unique_loops = [len(loop) for loop in self.list_loops]
-        self.lens_pre_loops = [len(run['pre_loop']) for run in
-                          self.list_of_runs]
-
-
-#-----------------------------------------------------------------
-
-"""
-Instead of making a complete list of start points before running,
-this produces them on the fly.  It also checks to see if it has done enough runs
-to feel confident that it has found most of the unique loops in existence.
-"""
-
-class Feedback_Multi_Run_with_Condition(Feedback_Multi_Run):
 
     def run_it(self, threshold):
         """  Split start_point into driver and
@@ -241,18 +109,6 @@ class Feedback_Multi_Run_with_Condition(Feedback_Multi_Run):
 
         run_counter = 0
         temp_num_unique_loops = 0
-
-        """ This needs to take two things into account, I think:
-                - the ratio between total number tested and number of unique loops
-                - the total number tested itself (in some form, as the "sample size")
-                
-                Well, not sure.  Maybe just the ratio is necessary.
-                
-                And then there's the maximum number of test points.  Can I use that?
-                
-                Let's just try a simple one:
-                - the ratio of unique loops to total tests should be: 0.05 (1/200). 
-        """
 
         self.do_one_run(0)
         run_counter += 1
@@ -273,7 +129,7 @@ class Feedback_Multi_Run_with_Condition(Feedback_Multi_Run):
             object with it.  Make an IATF_Runner and run
             it on the IATF.  
         """
-
+        print("Started a run!")
         self.generate_one_new_start_point()
         current_index = len(self.list_of_start_points)-1
         start_point = self.list_of_start_points[current_index][1:]
@@ -331,4 +187,40 @@ class Feedback_Multi_Run_with_Condition(Feedback_Multi_Run):
             raise ValueError("WARNING!  MAXIMUM STARTING POINTS REACHED!")
 
 
+    def check_add_loop_list(self, loop):
+        """If no loops are in list_loops, add the current one
+           Otherwise, check if one element of a loop is already
+           in one of the existing loops.  If so, loop has
+           already been encountered, so return index of
+           that loop.  If not, add new loop to list_loops
+           and return index of new loop.
+        """
+
+        temp_length = len(self.list_loops)
+
+        if temp_length < 1:
+            self.list_loops.append(loop)
+            return 0
+        else:
+            for i in range(temp_length):
+                for j in self.list_loops[i]:
+                    if np.array_equal(j, loop[0]):
+                        return i
+        self.list_loops.append(loop)
+        return temp_length-1
+
+
+    def crunch_numbers(self):
+        """ Using data in list_loops, determine
+            how many unique loops have been found,
+            how long each is, how long each of the
+            pre_loops is (all pre-loops will be unique,
+            so there will be one for each run), and
+            what the average length of the pre_loops
+            is.
+        """
+        self.num_unique_loops = len(self.list_loops)
+        self.lens_unique_loops = [len(loop) for loop in self.list_loops]
+        self.lens_pre_loops = [len(run['pre_loop']) for run in
+                          self.list_of_runs]
 

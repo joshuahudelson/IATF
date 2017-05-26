@@ -52,19 +52,10 @@ class IATF_Runner:
 
         location_list:    List, similar to driver_list when 'sequence' is
                           species.  I might not ever get around to using it.
-
-        loop_index:       Int, index at which the sequence begins being in a
-                          a loop that it will never leave (if driver_species
-                          is set to 'feedback.'
-
-        loop_status_boolean:
-                          Boolean, whether the list being generated has
-                          started looping.  Default is False.
         """
 
         self.IATF = IATF
         self.iters = iters
-        self.loop_index = None
         
         self.SPECIES_FEEDBACK = 'feedback'
         self.SPECIES_SEQUENCE = 'sequence'
@@ -73,26 +64,48 @@ class IATF_Runner:
 
         if ((driver_species == self.SPECIES_FEEDBACK) & 
            (init_driver == None)):
-               raise ValueError("Must provide an init_value!")
+               raise ValueError("You must provide an init_value for feedback-species!")
 
         self.init_driver = init_driver
 
         if ((driver_species == self.SPECIES_SEQUENCE) &
            ((driver_list == None) or
             (len(driver_list) != iters))):
-            raise ValueError("Driver_list lacking or of wrong length!")
+            raise ValueError("Driver_list missing or of wrong length for sequence-species!")
         if ((driver_species == self.SPECIES_SINGLE_VALUE) &
             (init_driver == None)):
-            raise ValueError("Init_driver missing!")
+            raise ValueError("Init_driver missing for single-value-species!")
 
         self.driver_species = driver_species
         self.stop_if_looping = stop_if_looping
         self.driver_list = self.make_driver_list(driver_list)
+        
+        
+        #---STATE VARIABLES---
+        """
+        list_differences: a list of the integer states of the IATF.
+        
+        list_indices: a list of the integer output of the IATF.
+            
+        list_scaled_indices: list_indices but scaled by num_elem-1.
+            
+        list_transfer_function: list_differences but scaled by the cum_sum.
+        
+        list_concat_differences: list_differences but with values from 
+                                 list_indices inserted at head.
+            
+        list_concat_transfer_function: list_transfer_function but with values
+                                       from list_scaled_indices inserted at head.
+            
+        self.loop_status_boolean: whether this run ended up looping or not.
+            
+        self.loop_index: the index at which the loop began (0 if it didn't loop)
+        """
 
         self.list_differences = [self.IATF.differences]
-        temp_cumsum = np.cumsum(self.list_differences)
-        
+
         self.list_indices = [self.IATF.find_index(self.driver_list[0], init_location)]
+        
         self.list_scaled_indices = [self.list_indices[0] / float(len(self.list_differences[0]))]
         self.list_transfer_functions = [self.IATF.transfer_function]
 
@@ -104,6 +117,8 @@ class IATF_Runner:
 
         self.loop_status_boolean = False
 
+        self.loop_index = None
+
 
     def run_it(self):
         """ Drives the IATF some number of times.  
@@ -112,26 +127,6 @@ class IATF_Runner:
             to True. Adds values to all the 
             lists.  Returns the number of iterations that 
             have been performed (or 0 if it doesn't loop).
-
-            Note: there are six main pieces of data that matter:
-
-            - list_indices: a list of the integer output of the IATF.
-
-            - list_differences: a list of the integer states of the IATF.
-            
-            - list_scaled_indices: list_indices but scaled by num_elem-1.
-            
-            - list_transfer_function: list_differences but scaled by the cum_sum.
-            
-            - list_concat_transfer_function: list_transfer_function but with values
-              from list_scaled_indices inserted at head.
-            
-            - list_concat_differences: list_differences but with values from 
-              list_indices inserted at head.
-            
-            - self.loop_status_boolean: whether this run ended up looping or not.
-            
-            - self.loop_index: the index at which the loop began (0 if it didn't loop)
         """
 
         for i in range(self.iters):
@@ -142,6 +137,7 @@ class IATF_Runner:
                 if temp_loop_test[0]:
                     self.loop_status_boolean = temp_loop_test[0]
                     self.loop_index = temp_loop_test[1]
+                    return
                 
             self.list_indices.append(copy.deepcopy(self.IATF.index))
             self.list_differences.append(copy.deepcopy(self.IATF.differences))

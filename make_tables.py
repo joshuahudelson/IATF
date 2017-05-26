@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from Feedback_Multi_Run import Feedback_Multi_Run_with_Condition
+from Feedback_Multi_Run import Feedback_Multi_Run
 import numpy as np
 import os
 
@@ -60,9 +60,10 @@ def make_tables(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
             if num_runs > max_possible_runs:
                 num_runs = max_possible_runs
 
-            result = Feedback_Multi_Run_with_Condition(num_elem, exp, num_runs, num_iters, max_value=max_value)
+            result = Feedback_Multi_Run(num_elem, exp, num_runs, num_iters, max_value=max_value)
+            print("Success!")
             result.run_it(threshold)
-            
+            print("Success2!")
             num_unique_loops[temp_counter].append(result.num_unique_loops)
             avg_len_loop[temp_counter].append(round(np.mean(result.lens_unique_loops), 3))
             std_loop[temp_counter].append(round(np.std(result.lens_unique_loops), 3))
@@ -105,17 +106,17 @@ def make_tables(num_elems_low, num_elems_high, exp_low, exp_high, exp_step,
 
 def run_test():
     num_elem_low = 4
-    num_elem_high = 7
+    num_elem_high = 5
 
-    exp_low = 1
-    exp_high = 5
-    exp_step = 0.2
+    exp_low = 3
+    exp_high = 4
+    exp_step = 1
 
-    num_runs = 1000
+    num_runs = 100
     num_iters = 10000
     max_value = 10
 
-    threshold = 0.001
+    threshold = 0.1
 
     make_tables(num_elem_low, num_elem_high, exp_low, exp_high,
                     exp_step, num_runs, num_iters, max_value, 
