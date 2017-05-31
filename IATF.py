@@ -16,11 +16,36 @@ class IATF:
                        start_point_transfer_function=None,
                        exponent=1):
         """ If differences given, compute transfer_function.
-            If transfer_function given, no differences computed
+            If transfer_function given, no differences are computed
             (for now).  Check type in both cases.  Assign
             exponent and number of elements to state variables.
             Create variables for index and scaled_index, to be
             used later.
+            
+            Note: If both differences and transfer function are given,
+            differences override transfer function.
+            
+            STATE VARIABLES:
+            
+            self.exponent: the exponent to which elements get raised.
+            
+            self.num_elems: the number of elements in the state.
+
+
+            self.differences: the integer representation of the state.
+            
+            self.transfer_function: the scaled, floating point representation
+                                    of the state.
+
+
+            self.index: the current 'input' integer.
+            
+            self.scaled_index: self.index normalized.
+
+
+            self.concat_differences: (property) differences concatenated with the integer index.
+            
+            self.concat_transfer_function: (property) transfer function concatenated with scaled index.
         """
 
         self.exponent = exponent
@@ -33,6 +58,8 @@ class IATF:
         elif start_point_differences != None:
             if type(start_point_differences[0]) != int:  # Numpy checks all values 
                 raise TypeError('Array must be of type int.')
+            elif sum(start_point_differences) == 0:
+                raise ValueError('Array cannot contain only zeros.')
             else:
                 self.differences = np.array(start_point_differences)
                 self.num_elems = len(self.differences)
@@ -43,7 +70,7 @@ class IATF:
                 raise TypeError('Array must be of type float.')
             else:
                 self.transfer_function = np.array(start_point_transfer_function)
-                self.differences = None
+                self.differences = self.compute_differences()
                 self.num_elems = len(start_point_transfer_function)
  
         self.index = None
@@ -56,7 +83,8 @@ class IATF:
             transfer_function (and also make scaled_index
             with it), then use it to drive update
             method.
-        """ 
+        """
+
         if round(input_value, 5) == 0.00000:
             input_value = epsilon
 
@@ -158,6 +186,7 @@ class IATF:
         # but keeping proportions the same via
         # greatest common denominator.
         # But I might not use this at all.
+        # Least Common Multiple function
         
         pass
 
@@ -205,6 +234,7 @@ if __name__ == '__main__':
     answer_3 = (check_3 == result_3)
     print(answer_3)
     tally += answer_3
+    print("")
 
     print("Test 4: Check epsilon.")
     start_diffs = [1, 1, 1, 1]
@@ -232,4 +262,14 @@ if __name__ == '__main__':
     final_4 = sum(answer_list) == 10
     print(final_4)
     tally += final_4
+    print("")
+    
+    print("Test 5: Check zero starting state.")
+    start_diffs = [0, 0, 0, 0]
+    print("Starting differences = " + str(start_diffs))
+    test_iatf = IATF(start_diffs)
+    test_iatf.compute_next(0.0)
+    result5 = test_iatf.transfer_function
+    result52 = test_iatf.differences
+    print(str(result5) + " | " + str(result52))
   
