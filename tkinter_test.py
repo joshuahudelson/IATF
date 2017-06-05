@@ -1,135 +1,183 @@
-from PIL import Image, ImageTk
-
-from tkinter import Tk, Label, BOTH, X, Y, RIGHT, LEFT, N, Text, BooleanVar, END
-from tkinter.ttk import Frame, Style, Entry, Checkbutton, Button, Scale
-
+# IATF_Demo_GUI
+from tkinter import *
 from IATF import IATF
+
 
 class IATF_Tester:
 
     def __init__(self, master):
         master.title('IATF_Tester')
 
-        self.my_IATF2 = IATF([2, 2, 2, 2])
+        self.font = ('Times', 20)
 
-        self.state = '[1, 1, 1, 1]'
-        self.exponent = '1'
-        self.driver_value = '0.75'
-        self.location_value = '0'
+        self.list_of_entry_names = ['Starting State', 'Exponent', 'Input',
+                                    'Location', 'Epsilon', 'Output']
 
-        frame_1 = Frame(master)
-        frame_1.pack(fill=X)
+        self.list_of_button_names = ['Initialize', 'Run', 'Feedback', 'Clear']
 
-        label_1 = Label(frame_1, text="Starting State", width=15)
-        label_1.pack(side=LEFT, padx=5, pady=5)
+        self.list_of_entry_order = [0, 1, 3, 4, 5, 7]
 
-        self.entry_1 = Entry(frame_1)
-        self.entry_1.pack(fill=X, padx=5, expand=True)
-        self.entry_1.insert(0, str(self.state))
-#--------
-        frame_2 = Frame(master)
-        frame_2.pack(fill=X)
+        self.list_of_button_order = [2, 6, 8, 9]
 
-        label_2 = Label(frame_2, text="Exponent", width=9)
-        label_2.pack(side=LEFT, padx=5, pady=5)
+        self.list_of_values = {'Starting State':[1, 1, 1, 1],
+                               'Exponent':1,
+                               'Input':0,
+                               'Location':0,
+                               'Epsilon':0.0,
+                               'Output':None}
 
-        self.entry_2 = Entry(frame_2)
-        self.entry_2.pack(fill=X, padx=5, expand=True)
-        self.entry_2.insert(0, str(self.exponent))
-#--------
-        frame_3 = Frame(master)
-        frame_3.pack(fill=X)
+        self.entries = []
+        self.buttons = []
+        self.labels_left = []
 
-        label_3 = Label(frame_3, text="Input", width=6)
-        label_3.pack(side=LEFT, padx=5, pady=5)
+        for i in range(len(self.list_of_entry_names)):
+            self.labels_left.append(Label(master, text=self.list_of_entry_names[i],
+                                     width=15, font=self.font, padx=5, pady=10))
+            self.labels_left[i].grid(row=self.list_of_entry_order[i], column=0)
 
-        self.entry_3 = Entry(frame_3)
-        self.entry_3.pack(fill=X, padx=5, expand=True)
-        self.entry_3.insert(0, str(self.driver_value))
-#--------
-        frame_4 = Frame(master)
-        frame_4.pack(fill=X)
+            self.entries.append(Entry(master, font=self.font))
+            self.entries[i].grid(row=self.list_of_entry_order[i], column = 1)
 
-        label_4 = Label(frame_4, width=6)
-        label_4.pack(side=LEFT, padx=5, pady=5)
+        for i in range(len(self.list_of_button_names)):
+            self.buttons.append(Button(master, text=self.list_of_button_names[i]))
+            self.buttons[i].grid(row=self.list_of_button_order[i], column = 1)
 
-        run_button = Button(master, text="Run", command=self.run_it)
-        run_button.pack()
-#--------
-        frame_5 = Frame(master)
-        frame_5.pack(fill=X)
-
-        label_5 = Label(frame_5, text="Current State", width=15)
-        label_5.pack(side=LEFT, padx=5, pady=5)
-
-        self.entry_5 = Entry(frame_5)
-        self.entry_5.pack(fill=X, padx=5, expand=True)
-        self.entry_5.insert(0, str(self.state))
-#--------
-        frame_6 = Frame(master)
-        frame_6.pack(fill=X)
-
-        label_6 = Label(frame_6, text="Output", width=9)
-        label_6.pack(side=LEFT, padx=5, pady=5)
-
-        self.entry_6 = Entry(frame_6)
-        self.entry_6.pack(fill=X, padx=5, expand=True)
-        self.entry_6.insert(0, str(self.exponent))
-#--------
-        run_button = Button(master, text="Repeat", command=self.repeat_it)
-        run_button.pack()
-        frame_1 = Frame(master)
-        frame_1.pack(fill=X)
+        self.buttons[0].configure(command = lambda: self.initialize_it(master))
+        self.buttons[1].configure(command = lambda: self.run_it(master))
+        self.buttons[2].configure(command = lambda: self.feedback(master))
+        self.buttons[3].configure(command = lambda: self.clear_list_of_states())
 
 
-    def run_it(self):
 
-        temp_start_state = []
+        self.list_of_states = [StringVar() for _ in range(len(self.list_of_entry_names) + \
+                                                          len(self.list_of_button_names))]
 
-        self.state = self.entry_1.get()
-        self.exponent = self.entry_2.get()
-        self.driver_value = self.entry_3.get()
+        self.list_of_output = [StringVar() for _ in range(len(self.list_of_entry_names) + \
+                                                          len(self.list_of_button_names))]
 
-        # make own function:
-        for element in self.state:
-            if (element != ',') & (element != ' ') & (element != '[') & (element != ']'):
-                temp_start_state.append(int(element))
-
-        self.my_IATF = IATF(start_point_differences=temp_start_state, exponent=float(self.exponent))
-        self.my_IATF.compute_next(float(self.driver_value))
-
-        self.state = self.my_IATF.differences
-        self.driver_value = self.my_IATF.index/float(len(self.state)-1)
-
-        self.entry_5.delete(0, END)
-        self.entry_5.insert(0, str(self.state))
-
-        self.entry_6.delete(0, END)
-        self.entry_6.insert(0, str(self.driver_value))
-
-    def repeat_it(self):
-        temp_start_state = []
-
-        self.state = self.entry_5.get()
-        self.exponent = self.entry_6.get()
-
-        # make own function:
-        for element in self.state:
-            if (element != ',') & (element != ' ') & (element != '[') & (element != ']'):
-                temp_start_state.append(int(element))
-
-        self.my_IATF.compute_next(float(self.driver_value))
-
-        self.state = self.my_IATF.differences
-        self.driver_value = self.my_IATF.index/float(len(self.state)-1)
-
-        self.entry_5.delete(0, END)
-        self.entry_5.insert(0, str(self.state))
-
-        self.entry_6.delete(0, END)
-        self.entry_6.insert(0, str(self.driver_value))
+        self.list_of_labels_right = []
+        self.list_of_labels_right_right = []
 
 
+        # This binds the state to the label
+        for i, state in enumerate(self.list_of_states):
+            self.list_of_labels_right.append(Label(master, textvariable=state,
+                                 width=15, font=self.font, padx=5, pady=10))
+            self.list_of_labels_right[i].grid(row=i, column=3)
+
+        for i, output in enumerate(self.list_of_output):
+            self.list_of_labels_right_right.append(Label(master, textvariable=output,
+                                 width=10, font=self.font, padx=5, pady=10))
+            self.list_of_labels_right_right[i].grid(row=i, column=4)
+
+        self.update(master)
+
+
+    def update(self, master):
+
+        for i, entry in enumerate(self.entries):
+            entry.delete(0, END)
+            entry.insert(0, str(self.list_of_values[self.list_of_entry_names[i]]))
+
+
+    def get_values(self):
+        self.list_of_values['Starting State'] = self.convert_string_to_list(self.entries[0].get())
+        self.list_of_values['Exponent'] = self.convert_string_to_float(self.entries[1].get())
+        self.list_of_values['Input'] = self.convert_string_to_int(self.entries[2].get())
+        self.list_of_values['Location'] = self.convert_string_to_int(self.entries[3].get())
+        self.list_of_values['Epsilon'] = self.convert_string_to_float(self.entries[4].get())
+        self.list_of_values['Output'] = self.convert_string_to_int(self.entries[5].get())
+
+
+    def convert_string_to_int(self, string_input):
+        if string_input == 'None':
+            return None
+        else:
+            return int(string_input)
+
+
+    def convert_string_to_float(self, string_input):
+        if string_input == 'None':
+            return None
+        else:
+            return float(string_input)
+
+
+    def convert_string_to_list(self, string_input):
+        if string_input == 'None':
+            return None
+        else:
+            temp_string = []
+            for element in string_input:
+                if (element != ',') & (element != ' ') & (element != '[') & (element != ']'):
+                    temp_string.append(int(element))
+            return temp_string
+
+
+    def push_to_output(self, output):
+        for i in range(len(self.list_of_output)):
+            if i == len(self.list_of_output)-1:
+                self.list_of_output[i].set(output)
+            else:
+                self.list_of_output[i].set(self.list_of_output[i+1].get())
+
+    def push_to_states(self, state):
+        for i in range(len(self.list_of_states)):
+            if i == len(self.list_of_states)-1:
+                self.list_of_states[i].set(state)
+            else:
+                self.list_of_states[i].set(self.list_of_states[i+1].get())
+
+    def initialize_it(self, master):
+        self.get_values()
+
+        temp_state = self.convert_string_to_list(self.list_of_values['Starting State'])
+
+        self.my_IATF = IATF(start_point_differences=temp_state,
+                            exponent=float(self.list_of_values['Exponent']))
+
+        self.push_to_states(self.my_IATF.differences)
+        self.push_to_output(self.list_of_values['Input'])
+
+
+    def run_it(self, master):
+        self.get_values()
+
+        self.my_IATF.compute_next(float(self.list_of_values['Input']/float(len(self.list_of_values['Starting State']) - 1)),
+                                  location = self.list_of_values['Location'],
+                                  epsilon=self.list_of_values['Epsilon'])
+
+        self.list_of_values['Output'] = self.my_IATF.index
+
+        self.update(master)
+
+        self.push_to_states(self.my_IATF.differences)
+        self.push_to_output(self.my_IATF.index)
+
+
+    def feedback(self, master):
+        self.get_values()
+
+        self.my_IATF.compute_next(float(self.list_of_values['Output']/float(len(self.list_of_values['Starting State']) - 1)),
+                                  location = self.list_of_values['Location'],
+                                  epsilon=self.list_of_values['Epsilon'])
+
+        self.list_of_values['Output'] = self.my_IATF.index
+
+        self.update(master)
+
+        self.push_to_states(self.my_IATF.differences)
+        self.push_to_output(self.my_IATF.index)
+
+
+    def clear_list_of_states(self):
+        for element in self.list_of_states:
+            element.set('')
+        for output in self.list_of_output:
+            element.set('')
+
+
+#-----------------
 
 def main():
     root = Tk()

@@ -123,7 +123,7 @@ class IATF:
         # function (i.e., all values but one are zero), in which case, just make it
         # arbitrarily smaller.
         if min_diff > 0.99999:
-            min_diff = 0.99999
+            min_diff = 0.99999   # Need to make this bigger?  See what happens with elem=3 and exp=10...50...100 (changes output pattern)
 
         if int(value) == 1:
             value = 1.0 - min_diff  # So that it chooses 2nd-to-last.  See above.
