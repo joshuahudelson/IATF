@@ -4,17 +4,17 @@ import copy
 import numpy as np
 
 class IATF:
-    """ A class for Iteratively-Adjusted Transfer Functions.
-        The object takes an n-dimensional starting array and
-        an exponent, then generates subsequent arrays based
-        on the input values it receives in the compute_next
-        function.
+    """ A class for Iteratively-Adjusted Transfer Functions.  The
+        object takes an n-dimensional starting array and an exponent,
+        then generates subsequent arrays based on the input values it
+        receives in the compute_next function.
     """
 
-
-    def __init__(self, start_point_differences=None,
-                       start_point_transfer_function=None,
-                       exponent=1):
+    def __init__(self,
+                 start_point_differences=None,
+                 start_point_transfer_function=None,
+                 exponent=1
+                 ):
         """ If differences given, compute transfer_function.
             If transfer_function given, no differences are computed
             (for now).  Check type in both cases.  Assign
@@ -47,7 +47,6 @@ class IATF:
 
             self.concat_transfer_function: (property) transfer function concatenated with scaled index.
         """
-        print("Made IATF")
         self.exponent = exponent
 
         if ((start_point_differences == None) and
@@ -129,12 +128,9 @@ class IATF:
             value = 1.0 - min_diff  # So that it chooses 2nd-to-last.  See above.
 
         index = np.sum(value >= temp_transfer_function)
-
         # Calculate index in terms of the pre-roll array.
         index = (index + location) % self.num_elems
-
         return index
-
 
     def update(self, value):
         """ This is the "Iterative Adjustment" of the class.
