@@ -39,19 +39,36 @@ class Feedback_Test_GUI:
             self.entries[i].insert(0, str(self.entry_values[self.names_entry_fields[i]]))
 
 
-
-
-        self.x = Button(master, text="Run It")
+        self.x = Button(master, text="Run It", command= lambda : self.run_it())
         self.x.grid(row=7, column=0)
-        self.x.configure(command = lambda : self.run_it())
+
+        self.loop_counter = 0
+
+        self.y = Button(master, text="Next Loop", command= lambda : self.display_next_loop())
+        self.y.grid(row=7, column=1, columnspan = 2)
 
         self.num_u_loops = StringVar()
         self.num_u_loops.set("Unique Loops: ")
 
-        self.label_unique_loops = Label(master, text="Unique Loops:",
+        self.label_unique_loops = Label(master,
                                         font=self.font, textvariable=self.num_u_loops)
         self.label_unique_loops.grid(row=8, column=0)
 
+        self.current_loop = StringVar()
+        self.current_loop.set(0)
+
+        self.label_current_loop = Label(master, font=self.font, textvariable=self.current_loop)
+        self.label_current_loop.grid(row=8, column = 1)
+
+        self.list_results = [StringVar() for i in range(9)]
+        self.list_result_labels = [Label(master, font=self.font, textvariable=the_result) for the_result in self.list_results]
+        for index, label in enumerate(self.list_result_labels):
+            label.grid(row=index+9, column=0)
+
+        self.loop_states = [StringVar() for i in range(18)]
+        self.loop_states_labels = [Label(master, font=self.font, textvariable=the_state) for the_state in self.loop_states]
+        for index, label in enumerate(self.loop_states_labels):
+            label.grid(row=index+9, column = 1)
 
     def run_it(self):
         self.get_entry_values()
@@ -59,9 +76,23 @@ class Feedback_Test_GUI:
         self.initialize_Feedback_Data()
         self.FD.run_it()
         self.show_results()
+        self.display_next_loop()
 
     def show_results(self):
         self.num_u_loops.set("Unique Loops = " + str(self.FD.num_unique_loops))
+        counter = 0
+        for index, loop in enumerate(self.FD.list_loops):
+            self.list_results[counter].set("Loop " + str(index) + ": " + str(self.FD.lens_unique_loops[index]))
+            counter += 1
+
+    def display_next_loop(self):
+        self.loop_counter = (self.loop_counter + 1) % len(self.FD.list_loops)
+        self.current_loop.set(self.loop_counter)
+        for state in self.loop_states:
+            state.set("")
+        for index, state in enumerate(self.FD.list_loops[self.loop_counter]):
+            if index < 18:
+                self.loop_states[index].set(self.FD.list_loops[self.loop_counter][index][1:])
 
 
     def get_entry_values(self):
@@ -82,6 +113,7 @@ class Feedback_Test_GUI:
                                self.entry_values["Threshold"],
                                self.entry_values["Constant State"])
         print(self.FD.iters)
+
 
     def convert_string_to_int(self, string_input):
         if string_input == 'None':
