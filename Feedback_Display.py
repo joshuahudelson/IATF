@@ -28,14 +28,25 @@ class Feedback_Data:
 
         self.loop_output_pattern = []
 
+        self.mem_list_loops = []
+        self.mem_list_num_loops = []
 
     def run_it(self):
-        for num_elems in self.list_num_elems:
-            for exp in self.list_exps:
+        for index_elems, num_elems in enumerate(self.list_num_elems):
+            print("index elems: " + str(index_elems))
+
+            self.mem_list_loops.append([])
+            self.mem_list_num_loops.append([])
+
+            for index_exp, exp in enumerate(self.list_exps):
+                print("index exp: " + str(index_exp))
+
+                self.mem_list_loops[index_elems].append([])
+                self.mem_list_num_loops[index_elems].append([])
 
                 self.make_lab(num_elems, exp)
 
-                self.run_lab()
+                self.run_lab(index_elems, index_exp)
 
                 self.crunch_numbers()
 
@@ -51,18 +62,18 @@ class Feedback_Data:
                                          self.threshold,
                                          self.constant_state)
 
-
-    def run_lab(self):
+    def run_lab(self, index_elems, index_exp):
 
         self.the_Lab.run_it()
         # Need to add the elems and exp into current_list_of_runs (?), and also the stuff below...
         self.current_list_of_runs = self.the_Lab.list_of_runs # no real reason to copy this...
-
         self.list_loops = self.the_Lab.list_loops
         self.num_unique_loops = self.the_Lab.num_unique_loops
         self.lens_unique_loops = self.the_Lab.lens_unique_loops
         self.lens_pre_loops = self.the_Lab.lens_pre_loops
 
+        self.mem_list_loops[index_elems][index_exp].append(self.list_loops)
+        self.mem_list_num_loops[index_elems][index_exp].append(self.num_unique_loops)
 
     def crunch_numbers(self):
 
