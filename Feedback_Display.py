@@ -15,7 +15,8 @@ class Feedback_Data:
                  threshold=0.1,
                  constant_state=None,
                  location_species='single_value',
-                 init_location=0
+                 init_location=0,
+                 custom_update=None
                  ):
         """
         start_point_species:
@@ -56,6 +57,8 @@ class Feedback_Data:
         self.threshold = threshold
         self.constant_state = constant_state
 
+        self.custom_update = custom_update
+
         self.table_of_tests = []
 
     def run_it(self):
@@ -76,7 +79,8 @@ class Feedback_Data:
                                          self.iters,
                                          self.max_value,
                                          self.threshold,
-                                         self.constant_state)
+                                         self.constant_state,
+                                         custom_update=self.custom_update)
 
 
     def run_lab(self, index_elems, index_exp):
@@ -105,12 +109,7 @@ def test():
                                       threshold=0.001)
     new_feedback_data.run_it()
 
-    print(new_feedback_data.num_start_points_per_loop)
-    print(new_feedback_data.mean_mean_difference_per_loop)
-    print()
-    for key in new_feedback_data.loop_and_start_point_mean_differences.keys():
-        print(key + ' : ' + str(new_feedback_data.loop_and_start_point_mean_differences[key]))
-
+#  No test here at the moment...
 
 if __name__=='__main__':
     test()

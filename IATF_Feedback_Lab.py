@@ -25,7 +25,8 @@ class IATF_Feedback_Lab:
                  threshold=0.1,
                  constant_state=None,
                  location_species = 'single_value',
-                 init_location = 0
+                 init_location = 0,
+                 custom_update=None
                 ):
 
         """ num_elems:    Int, the length of the array that will
@@ -74,7 +75,6 @@ class IATF_Feedback_Lab:
                       List, ints describing how many runs
                       ended in a loop and how many didn't.
 
-        percentage of start-points per loop...
         """
 
         self.start_point_species = start_point_species
@@ -107,6 +107,8 @@ class IATF_Feedback_Lab:
         self.avg_preloop_per_loop = []
         self.runs_per_loop = []
         self.runs_per_loop_per_total = []
+
+        self.custom_update = custom_update
 
         # Ultimately remove:
         self.list_of_runs = []
@@ -165,7 +167,8 @@ class IATF_Feedback_Lab:
                                      stop_if_looping=True,
                                      output_type='integer',
                                      location_species = self.location_species,
-                                     init_location = self.init_location)
+                                     init_location = self.init_location,
+                                     custom_update=self.custom_update)
 
         my_IATF_Runner.run_it()
 

@@ -22,9 +22,10 @@ class Feedback_Test_GUI:
 
         self.font = ('Times', 15)
         self.font_small = ('Times', 10)
+        self.font_medium = ('Times', 11)
 
         self.GRID_WIDTH = 5
-        self.GRID_HEIGHT = 15
+        self.GRID_HEIGHT = 10
 
         self.grid_loc_tuple = (0, 0)
 
@@ -35,11 +36,11 @@ class Feedback_Test_GUI:
 
         self.names_entry_fields = ["Species", "Number of Elements", "Exponent",
                                    "Iterations", "Maximum Value", "Threshold",
-                                   "Constant State"]
+                                   "Constant State", "Location Species"]
 
         self.entry_values = {"Species":"random", "Number of Elements":"4, 5, 6, 7",
                              "Exponent":"2, 2.5, 3, 3.5", "Iterations":1000, "Maximum Value":10,
-                             "Threshold": 0.01, "Constant State": None}
+                             "Threshold": 0.01, "Constant State": None, "Location Species":'single_value'}
 
         self.entry_labels = [Label(
         master, text=name, font=self.font, width=20) for name in self.names_entry_fields]
@@ -48,20 +49,26 @@ class Feedback_Test_GUI:
 
         self.run_button = Button(master, text="Run It", command= lambda : self.run_it())
 
-        self.elem_axis = [StringVar() for i in range(5)]
+        self.elem_axis = [StringVar() for i in range(self.GRID_WIDTH)]
         self.labels_elem_axis = [Label(master,
                                        textvariable=elem,
                                        font=self.font) for elem in self.elem_axis]
 
-        self.exp_axis = [StringVar() for i in range(15)]
+        self.exp_axis = [StringVar() for i in range(self.GRID_HEIGHT)]
         self.labels_exp_axis = [Label(master,
                                        textvariable=exp,
                                        font=self.font, pady=5) for exp in self.exp_axis]
 
-        self.grid_values = [[StringVar() for i in range(5)] for j in range(15)]
+        self.grid_values = [[StringVar() for i in range(self.GRID_WIDTH)] for j in range(self.GRID_HEIGHT)]
 
         self.grid_labels = [[Label(master, textvariable=self.grid_values[i][j],
-                                   font=self.font) for j in range(5)] for i in range(15)]
+                                   font=self.font) for j in range(self.GRID_WIDTH)] for i in range(self.GRID_HEIGHT)]
+
+        self.custom_update = Text(master, font=self.font_medium, height=6)
+        self.custom_update.grid(row=20, column=0, columnspan=6)
+
+        temp_text = "self.differences += 1\nself.differences[value] = 0\nself.transfer_function = self.compute_transfer_function(self.differences)"
+        self.custom_update.insert(END, temp_text)
 
 # Set the values and place the stuff.
 
@@ -70,19 +77,19 @@ class Feedback_Test_GUI:
             self.entries[i].grid(row=i, column=3, columnspan=3)
             self.entries[i].insert(0, str(self.entry_values[self.names_entry_fields[i]]))
 
-        self.run_button.grid(row=7, column=0, columnspan=3)
+        self.run_button.grid(row=8, column=0, columnspan=3)
 
         for i in range(len(self.elem_axis)):
             self.elem_axis[i].set(i)
-            self.labels_elem_axis[i].grid(row=8, column=i+1)
+            self.labels_elem_axis[i].grid(row=9, column=i+1)
         for i in range(len(self.exp_axis)):
             self.exp_axis[i].set(i)
-            self.labels_exp_axis[i].grid(row=9+i, column=0)
+            self.labels_exp_axis[i].grid(row=10+i, column=0)
 
-        for i in range(15):
-            for j in range(5):
+        for i in range(self.GRID_HEIGHT):
+            for j in range(self.GRID_WIDTH):
                 self.grid_values[i][j].set("_")
-                self.grid_labels[i][j].grid(row=i+9, column=j+1)
+                self.grid_labels[i][j].grid(row=i+10, column=j+1)
                 self.grid_labels[i][j].configure(width = 5, background="light gray")
 
 #RIGHT SIDE OF SCREEN:
@@ -276,7 +283,7 @@ class Feedback_Test_GUI:
 
     def get_entry_values(self):
         for index, entry in enumerate(self.entries):
-            print("did it")
+            print("Getting entry values...")
             if self.names_entry_fields[index] == "Threshold":
                 self.entry_values[self.names_entry_fields[index]] = self.convert_string_to_float(entry.get())
             elif self.names_entry_fields[index] == "Number of Elements":
@@ -285,6 +292,9 @@ class Feedback_Test_GUI:
                 self.entry_values[self.names_entry_fields[index]] = self.convert_string_to_float_list(entry.get())
             elif (self.names_entry_fields == "Iterations") | (self.names_entry_fields == "Maximum Value"):
                 self.entry_values[self.names_entry_fields[index]] = self.convert_string_to_int(entry.get())
+            elif (self.names_entry_fields == "Species") | (self.names_entry_fields == "Location Species"):
+                self.entry_values[self.names_entry_fields[index]] = entry.get()
+
 
     def initialize_Feedback_Data(self):
         self.FD = Feedback_Data(self.entry_values["Species"],
@@ -293,8 +303,9 @@ class Feedback_Test_GUI:
                                self.entry_values["Iterations"],
                                self.entry_values["Maximum Value"],
                                self.entry_values["Threshold"],
-                               self.entry_values["Constant State"])
-
+                               self.entry_values["Constant State"],
+                               location_species=self.entry_values["Location Species"],
+                               custom_update=self.custom_update.get(1.0, END))
 
     def convert_string_to_int(self, string_input):
         if string_input == 'None':
