@@ -76,7 +76,7 @@ class IATF:
         self.scaled_index = None
 
 
-    def compute_next(self, input_value, location=0, epsilon=0.00000):
+    def compute_next(self, input_value, location=0, epsilon=0.00000, custom_update=None):
         """ If input is zero, use epsilon value (whose default is
             zero).  Look up index of input_value in
             transfer_function (and also make scaled_index
@@ -88,7 +88,7 @@ class IATF:
             input_value = epsilon
 
         self.index = self.find_index(input_value, location)
-        self.update(self.index)
+        self.update(self.index, custom_update)
 
         self.scaled_index = float(self.index)/(self.num_elems-1)
 
@@ -132,16 +132,18 @@ class IATF:
         index = (index + location) % self.num_elems
         return index
 
-    def update(self, value):
+    def update(self, value, custom_update):
         """ This is the "Iterative Adjustment" of the class.
             Increment all indices by one and set the most-
             recently chosen index to zero.  Then compute the
             new resulting transfer_function.
         """
-
-        self.differences += 1
-        self.differences[value] = 0
-        self.transfer_function = self.compute_transfer_function(self.differences)
+        if custom_update != None:
+            exec(custom_update)
+        else:
+            self.differences += 1
+            self.differences[value] = 0
+            self.transfer_function = self.compute_transfer_function(self.differences)
 
 
     @property
@@ -190,6 +192,13 @@ class IATF:
 # TESTS:
 
 if __name__ == '__main__':
+
+    exec_test_iatf = IATF([1, 1, 1, 1])
+
+    cust_up = 'self.differences += 5\nself.differences[value] = 0\nself.transfer_function = self.compute_transfer_function(self.differences)'
+    exec_test_iatf.compute_next(0.0, custom_update=cust_up)
+    print(exec_test_iatf.differences)
+#-----------------
 
     tally = 0
 

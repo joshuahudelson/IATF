@@ -27,6 +27,7 @@ class IATF_Feedback_Lab:
                  location_species = 'single_value',
                  init_location = 0
                 ):
+
         """ num_elems:    Int, the length of the array that will
                       become the differences and transfer_function
                       in the IATF object.
@@ -69,11 +70,6 @@ class IATF_Feedback_Lab:
                       A list of the lengths of the loops in
                       list_loops.
 
-        replace with statistical per loop (avg prelength, stddev, etc.)
-        lens_pre_loops:
-                      A list of the lengths of the pre_loops,
-                      one for each run in list_of_runs.
-
         num_looping_vs_not:
                       List, ints describing how many runs
                       ended in a loop and how many didn't.
@@ -108,7 +104,6 @@ class IATF_Feedback_Lab:
         self.num_looping_vs_not = [0, 0]
         self.num_unique_loops = 0
         self.lens_unique_loops = []
-        self.lens_pre_loops = []
         self.avg_preloop_per_loop = []
         self.runs_per_loop = []
         self.runs_per_loop_per_total = []

@@ -18,13 +18,16 @@ class Feedback_Test_GUI:
             self.label_unique_loops: display this run's number of unique loops.
         """
 
-        master.title('IATF_Tester')
+        master.title('IATF Feedback Tester')
 
         self.font = ('Times', 15)
         self.font_small = ('Times', 10)
 
         self.GRID_WIDTH = 5
         self.GRID_HEIGHT = 15
+
+        self.grid_loc_tuple = (0, 0)
+
 
 # LEFT SIDE OF SCREEN:
 
@@ -34,9 +37,9 @@ class Feedback_Test_GUI:
                                    "Iterations", "Maximum Value", "Threshold",
                                    "Constant State"]
 
-        self.entry_values = {"Species":"random", "Number of Elements":4,
-                             "Exponent":1, "Iterations":1000, "Maximum Value":10,
-                             "Threshold": 0.001, "Constant State": None}
+        self.entry_values = {"Species":"random", "Number of Elements":"4, 5, 6, 7",
+                             "Exponent":"2, 2.5, 3, 3.5", "Iterations":1000, "Maximum Value":10,
+                             "Threshold": 0.01, "Constant State": None}
 
         self.entry_labels = [Label(
         master, text=name, font=self.font, width=20) for name in self.names_entry_fields]
@@ -80,7 +83,7 @@ class Feedback_Test_GUI:
             for j in range(5):
                 self.grid_values[i][j].set("_")
                 self.grid_labels[i][j].grid(row=i+9, column=j+1)
-                self.grid_labels[i][j].configure(width = 5, background="red")
+                self.grid_labels[i][j].configure(width = 5, background="light gray")
 
 #RIGHT SIDE OF SCREEN:
     # TOP:
@@ -94,8 +97,8 @@ class Feedback_Test_GUI:
         self.test_number.set("Test #: ")
         self.elems_in_this_test.set("Elements: ")
         self.exp_in_this_test.set("Exponent: ")
-        self.num_u_loops.set("Unique Loops: ")
-        self.current_loop.set("Current Loop: ")
+        self.num_u_loops.set("Unique Loops: 0")
+        self.current_loop.set("Current Loop: 0")
 
         # Create the labels and buttons
         self.label_test_number = Label(master,
@@ -124,19 +127,24 @@ class Feedback_Test_GUI:
                                    font=self.font,
                                    textvariable=the_state) for the_state in self.loop_states]
 
+        self.loop_indices = [StringVar() for i in range(20)]
+        self.loop_indices_labels = [Label(master, font=self.font, textvariable=the_output) for the_output in self.loop_indices]
+
         # Place labels and buttons.
         self.label_test_number.grid(row=0, column=6, columnspan=2)
         self.label_elems_in_this_test.grid(row=1, column=6)
         self.label_exp_in_this_test.grid(row=1, column=7)
         self.label_unique_loops.grid(row=2, column=6, columnspan=2)
-        self.next_test_button.grid(row=3, column=6)
-        self.prev_test_button.grid(row=3, column=7)
+        self.next_test_button.grid(row=3, column=7)
+        self.prev_test_button.grid(row=3, column=6)
         self.label_current_loop.grid(row=5, column=6, columnspan=2)
-        self.next_loop_button.grid(row=6, column=6)
-        self.prev_loop_button.grid(row=6, column=7)
+        self.next_loop_button.grid(row=6, column=7)
+        self.prev_loop_button.grid(row=6, column=6)
 
         for index, label in enumerate(self.loop_states_labels):
-            label.grid(row=index+9, column = 6, columnspan=4)
+            label.grid(row=index+9, column = 6, columnspan=3)
+        for index, label in enumerate(self.loop_indices_labels):
+            label.grid(row=index+9, column = 9)
 
 #--------------------------------
 
@@ -151,7 +159,7 @@ class Feedback_Test_GUI:
     def clear_grid_background(self):
         for i in range(self.GRID_HEIGHT):
             for j in range(self.GRID_WIDTH):
-                self.grid_labels[i][j].configure(background="gray")
+                self.grid_labels[i][j].configure(background="light gray")
 
     def clear_axis_values(self):
         for i in range(self.GRID_WIDTH):
@@ -173,25 +181,23 @@ class Feedback_Test_GUI:
         self.show_results()
 
     def show_results(self):
-        self.num_u_loops.set("Unique Loops = " + str(self.FD.num_unique_loops))
+        self.num_u_loops.set("Unique Loops = " + str(self.FD.table_of_tests[self.grid_loc_tuple[0]][self.grid_loc_tuple[1]]['number unique loops']))
         self.display_elem_axis()
         self.display_exp_axis()
         self.display_grid()
         self.test_counter = 0
         self.loop_counter = 0
         self.highlight_current()
-        self.import_loops()
-
-
+        self.import_loop_states()
 
     def highlight_current(self):
         self.clear_grid_background()
+        self.update_grid_loc()
+        self.grid_labels[self.grid_loc_tuple[0]][self.grid_loc_tuple[1]].configure(background="yellow")
 
+    def update_grid_loc(self):
         temp_ypos = int(self.test_counter/len(self.FD.list_num_elems)) % len(self.FD.list_exps)
         temp_xpos = self.test_counter % len(self.FD.list_num_elems)
-
-        self.grid_labels[temp_ypos][temp_xpos].configure(background="yellow")
-
         self.grid_loc_tuple = (temp_ypos, temp_xpos)
 
     def display_elem_axis(self):
@@ -207,38 +213,66 @@ class Feedback_Test_GUI:
                 self.exp_axis[i].set(self.FD.list_exps[i])
 
     def display_grid(self):
-        temp_rows = len(self.entry_values["Exponent"])
-        temp_cols = len(self.entry_values["Number of Elements"])
-        for i in range(temp_rows):
-            for j in range(temp_cols):
-                if (i < self.GRID_HEIGHT) & (j < self.GRID_WIDTH):
-                    self.grid_values[i][j].set(self.FD.mem_list_num_loops[j][i]) # j and i reversed in Feedback Display because dumb coding.
+        """ In each grid box, display the number of unique loops
+            in that test.
+        """
+        temp_elems = len(self.entry_values["Number of Elements"])
+        temp_exps = len(self.entry_values["Exponent"])
+        for i in range(temp_elems):
+            for j in range(temp_exps):
+                # Entry values could exceed grid space:
+                if (i < self.GRID_WIDTH) & (j < self.GRID_HEIGHT):
+                    # exp and elem (y and x) reversed:
+                    self.grid_values[i][j].set(self.FD.table_of_tests[i][j]['number unique loops'])
 
     def clear_loop_states(self):
+        """ Clear the grid entries associated with loop state sequences.
+        """
         for state in self.loop_states:
             state.set("")
+        for index in self.loop_indices:
+            index.set("")
 
-    def import_loops(self):
+    def import_loop_states(self):
+        """ Put the loops associated with the currently-highlighted test into
+            an array for sequential viewing.
+        """
         self.clear_loop_states()
-        for index, state in enumerate(self.FD.mem_list_loops[self.grid_loc_tuple[1]][self.grid_loc_tuple[0]][self.loop_counter]):
+        for index, state in enumerate(self.FD.table_of_tests[self.grid_loc_tuple[0]][self.grid_loc_tuple[1]]['list of loops'][self.loop_counter]):
             if index < 18:
-                self.loop_states[index].set(state)
+                self.loop_states[index].set(state[1:])
+                self.loop_indices[index].set(state[0])
 
     def display_next_loop(self):
-        self.loop_counter = (self.loop_counter + 1) % len(self.loop_states)
-        self.current_loop.set(self.loop_counter)
+        """ Increment the loop counter to display the index of the new loop
+            being shown.
+        """
+        self.loop_counter = (self.loop_counter + 1) % self.FD.table_of_tests[self.grid_loc_tuple[0]][self.grid_loc_tuple[1]]['number unique loops']
+        self.current_loop.set("Current Loop: " + str(self.loop_counter))
+        self.import_loop_states() # maybe this is right?
 
     def display_prev_loop(self):
-        self.loop_counter = (self.loop_counter - 1) % len(self.loop_states)
-        self.current_loop.set(self.loop_counter)
+        """ Decrement the loop counter to display the index of the new loop
+            being shown.  (But this doesn't show the loop yet, does it??)
+        """
+        self.loop_counter = (self.loop_counter - 1) % self.FD.table_of_tests[self.grid_loc_tuple[0]][self.grid_loc_tuple[1]]['number unique loops']
+        self.current_loop.set("Current Loop: " + str(self.loop_counter))
+        self.import_loop_states()
+
+    def zero_loop_counter(self):
+       self.loop_counter = 0
+       self.current_loop.set("Current Loop: " + str(self.loop_counter))
+       self.import_loop_states()
 
     def display_next_test(self):
         self.test_counter += 1
         self.highlight_current()
+        self.zero_loop_counter()
 
     def display_prev_test(self):
         self.test_counter -= 1
         self.highlight_current()
+        self.zero_loop_counter()
 
     def get_entry_values(self):
         for index, entry in enumerate(self.entries):
@@ -251,7 +285,6 @@ class Feedback_Test_GUI:
                 self.entry_values[self.names_entry_fields[index]] = self.convert_string_to_float_list(entry.get())
             elif (self.names_entry_fields == "Iterations") | (self.names_entry_fields == "Maximum Value"):
                 self.entry_values[self.names_entry_fields[index]] = self.convert_string_to_int(entry.get())
-
 
     def initialize_Feedback_Data(self):
         self.FD = Feedback_Data(self.entry_values["Species"],
@@ -284,6 +317,7 @@ class Feedback_Test_GUI:
         temp_list = [float(i) for i in string_input.split(',')]
         print(temp_list)
         return(temp_list)
+
 #--------------
 
 def main():
