@@ -177,7 +177,22 @@ class Feedback_Test_GUI:
         self.display_elem_axis()
         self.display_exp_axis()
         self.display_grid()
-        counter = 0
+        self.test_counter = 0
+        self.loop_counter = 0
+        self.highlight_current()
+        self.import_loops()
+
+
+
+    def highlight_current(self):
+        self.clear_grid_background()
+
+        temp_ypos = int(self.test_counter/len(self.FD.list_num_elems)) % len(self.FD.list_exps)
+        temp_xpos = self.test_counter % len(self.FD.list_num_elems)
+
+        self.grid_labels[temp_ypos][temp_xpos].configure(background="yellow")
+
+        self.grid_loc_tuple = (temp_ypos, temp_xpos)
 
     def display_elem_axis(self):
         temp_len = len(self.FD.list_num_elems)
@@ -199,24 +214,31 @@ class Feedback_Test_GUI:
                 if (i < self.GRID_HEIGHT) & (j < self.GRID_WIDTH):
                     self.grid_values[i][j].set(self.FD.mem_list_num_loops[j][i]) # j and i reversed in Feedback Display because dumb coding.
 
-    def display_next_loop(self):
-        self.loop_counter = (self.loop_counter + 1) % len(self.FD.list_loops)
-        self.current_loop.set(self.loop_counter)
+    def clear_loop_states(self):
         for state in self.loop_states:
             state.set("")
-        for index, state in enumerate(self.FD.list_loops[self.loop_counter]):
+
+    def import_loops(self):
+        self.clear_loop_states()
+        for index, state in enumerate(self.FD.mem_list_loops[self.grid_loc_tuple[1]][self.grid_loc_tuple[0]][self.loop_counter]):
             if index < 18:
-                self.loop_states[index].set(self.FD.list_loops[self.loop_counter][index][1:])
+                self.loop_states[index].set(state)
+
+    def display_next_loop(self):
+        self.loop_counter = (self.loop_counter + 1) % len(self.loop_states)
+        self.current_loop.set(self.loop_counter)
 
     def display_prev_loop(self):
-        pass
+        self.loop_counter = (self.loop_counter - 1) % len(self.loop_states)
+        self.current_loop.set(self.loop_counter)
 
     def display_next_test(self):
-        pass
+        self.test_counter += 1
+        self.highlight_current()
 
     def display_prev_test(self):
-        pass
-
+        self.test_counter -= 1
+        self.highlight_current()
 
     def get_entry_values(self):
         for index, entry in enumerate(self.entries):

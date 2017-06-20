@@ -8,11 +8,12 @@ import copy
 
 
 class IATF_Feedback_Lab:
-    """ A class for generating multiple lists
-        of output from IATF_Runners, each
+    """ A class for generating results from
+        from many IATF_Runners, each
         starting with a unique start_point,
-        and consolidating the information from
-        those lists.
+        and performing a first-pass consolidation
+        of the resulting data (info about
+        the loops).
     """
 
     def __init__(self,
@@ -22,10 +23,11 @@ class IATF_Feedback_Lab:
                  iters,
                  max_value=None,
                  threshold=0.1,
-                 constant_state=None
+                 constant_state=None,
+                 location_species = 'single_value',
+                 init_location = 0
                 ):
-        """
-        num_elems:    Int, the length of the array that will
+        """ num_elems:    Int, the length of the array that will
                       become the differences and transfer_function
                       in the IATF object.
 
@@ -37,21 +39,25 @@ class IATF_Feedback_Lab:
         iters:        Int, the number of iterations each IATF_
                       Runner should do before stopping.
 
-        max_value:    Int, The maximum value any of the differences
+        max_value:    Int, The maximum value of any of the differences
                       in the start_point.
 
-        FILL IN REST HERE.
+        threshold:    Float, the percentage at which the lab will stop
+                      testing new points.  Calculated by:
+                      (number of unique loops)/(total number of runs)
 
-        ---
 
+        delete:
         list_of_runs: List, dicts containing all the state information
                       from each run (of an IATF_Runner), plus an int to
                       which loop in list_loops that run falls into.
 
+        replace with start-point-patterns...
         list_of_start_points:
                       List, numpy arrays describing the complete state
                       of an IATF object: current driver (int) and current
                       differences (ints) concatenated into numpy array.
+        - - -
 
         list_loops:   A list containing a list of each unique loop
                       encountered in list_of_runs.
@@ -63,6 +69,7 @@ class IATF_Feedback_Lab:
                       A list of the lengths of the loops in
                       list_loops.
 
+        replace with statistical per loop (avg prelength, stddev, etc.)
         lens_pre_loops:
                       A list of the lengths of the pre_loops,
                       one for each run in list_of_runs.
@@ -70,6 +77,8 @@ class IATF_Feedback_Lab:
         num_looping_vs_not:
                       List, ints describing how many runs
                       ended in a loop and how many didn't.
+
+        percentage of start-points per loop...
         """
 
         self.start_point_species = start_point_species
@@ -88,23 +97,30 @@ class IATF_Feedback_Lab:
         else:
             self.max_value = max_value
 
-        self.list_of_runs = []
+        self.threshold = threshold
+        self.location_species = location_species
+        self.init_location = init_location
 
-        self.list_of_start_points = []
+# State Variables:
 
+        self.number_of_runs_completed = 0
         self.list_loops = []
         self.num_looping_vs_not = [0, 0]
-
-        # Crunch Numbers variables
         self.num_unique_loops = 0
         self.lens_unique_loops = []
         self.lens_pre_loops = []
+        self.avg_preloop_per_loop = []
+        self.runs_per_loop = []
+        self.runs_per_loop_per_total = []
+
+        # Ultimately remove:
+        self.list_of_runs = []
+        self.list_of_start_points = []
 
         self.max_length_list_start_points = (self.max_value+1)**self.num_elems
-
         self.start_points_repeated = 0
 
-        self.threshold = threshold
+
 
     def run_it(self):
         """  Split start_point into driver and
@@ -122,10 +138,8 @@ class IATF_Feedback_Lab:
 
         self.do_one_run(0)
         run_counter += 1
-        #self.crunch_numbers()
 
         # Need decision tree for different species.  So make check_condition() which returns a boolean to continue or not
-        # Maybe run_it should also return a value?  Or at least print "Done!"
 
         while (len(self.list_loops)/run_counter > self.threshold) and (run_counter < self.max_length_list_start_points):
             self.do_one_run(run_counter)
@@ -133,6 +147,7 @@ class IATF_Feedback_Lab:
             run_counter += 1
 
         self.crunch_numbers()
+        print("The Lab finished a test!")
 
 
     def do_one_run(self, index):
@@ -142,10 +157,9 @@ class IATF_Feedback_Lab:
         """
 
         self.list_of_start_points.append(self.get_start_point())
-
-        current_index = len(self.list_of_start_points)-1
-
+        current_index = len(self.list_of_start_points) - 1
         start_point_state = self.list_of_start_points[current_index][1:]
+        # Scale the input value:
         start_point_driver = float(self.list_of_start_points[current_index][0])/(self.num_elems-1)
 
         my_IATF = IATF(start_point_differences=start_point_state, exponent=self.exponent)
@@ -154,7 +168,9 @@ class IATF_Feedback_Lab:
                                      init_driver=start_point_driver,
                                      driver_species='feedback',
                                      stop_if_looping=True,
-                                     output_type='integer')
+                                     output_type='integer',
+                                     location_species = self.location_species,
+                                     init_location = self.init_location)
 
         my_IATF_Runner.run_it()
 
@@ -164,13 +180,17 @@ class IATF_Feedback_Lab:
         if loop_status is False:
             self.num_looping_vs_not[1] += 1
             the_loop = [None]
+            len_pre_loop = len(my_IATF_Runner.list_states)
             loop_number = None
         else:
             self.num_looping_vs_not[0] += 1
             the_loop = my_IATF_Runner.list_states[loop_index:]
-            loop_number = self.check_add_loop_list(the_loop)
+            len_pre_loop = len(my_IATF_Runner.list_states[:loop_index])
+            loop_number = self.check_add_loop_list(the_loop, len_pre_loop)
 
         pre_loop = my_IATF_Runner.list_states[:loop_index]
+
+        # need: start-point patters
 
         self.list_of_runs.append({'run_index':index,
                                   'start_point':self.list_of_start_points[current_index],
@@ -182,7 +202,9 @@ class IATF_Feedback_Lab:
                                   'loop_status':loop_status,
                                   'loop_number':loop_number})
 
-# doesn't need to be returned
+        self.number_of_runs_completed += 1
+
+
     def get_start_point(self):
         if self.start_point_species == self.START_POINT_SPECIES_RANDOM:
             return(self.generate_random_start_point())
@@ -216,7 +238,7 @@ class IATF_Feedback_Lab:
             raise ValueError("WARNING!  MAXIMUM STARTING POINTS REACHED!")
 
 
-    def check_add_loop_list(self, loop):
+    def check_add_loop_list(self, loop, len_pre_loop):
         """If no loops are in list_loops, add the current one
            Otherwise, check if one element of a loop is already
            in one of the existing loops.  If so, loop has
@@ -229,13 +251,20 @@ class IATF_Feedback_Lab:
 
         if temp_length < 1:
             self.list_loops.append(loop)
+            self.runs_per_loop.append(1)
+            self.avg_preloop_per_loop.append(len_pre_loop)
             return 0
         else:
             for i in range(temp_length):
                 for j in self.list_loops[i]:
                     if np.array_equal(j, loop[0]):
+                        self.runs_per_loop[i] += 1
+                        self.avg_preloop_per_loop[i] += len_pre_loop
                         return i
+
         self.list_loops.append(loop)
+        self.runs_per_loop.append(1)
+        self.avg_preloop_per_loop.append(len_pre_loop)
         return temp_length-1
 
 
@@ -248,22 +277,54 @@ class IATF_Feedback_Lab:
         """
         self.num_unique_loops = len(self.list_loops)
         self.lens_unique_loops = [len(loop) for loop in self.list_loops]
-        self.lens_pre_loops = [len(run['pre_loop']) for run in
-                          self.list_of_runs]
 
+        for index, avg in enumerate(self.avg_preloop_per_loop):
+            self.avg_preloop_per_loop[index] = float(self.avg_preloop_per_loop[index])/self.runs_per_loop[index]
+
+        for sum2 in self.runs_per_loop:
+            self.runs_per_loop_per_total.append(sum2/self.number_of_runs_completed)
+
+
+    def print_status(self):
+
+        print("Number of runs completed: " + str(self.number_of_runs_completed))
+        print("Number looping vs. not: " + str(self.num_looping_vs_not[0]) + \
+                                   " | " + str(self.num_looping_vs_not[1]))
+        print("Number of unique loops: " + str(self.num_unique_loops))
+        print("Lengths of unique loops: " + str(self.lens_unique_loops))
+
+        print("Runs per loop:")
+        for index, runs_count in enumerate(self.runs_per_loop):
+             print(str(index) + ": " + str(runs_count))
+
+        print("Percentage of runs per loop:")
+        for index, percent in enumerate(self.runs_per_loop_per_total):
+             print(str(index) + ": " + str(percent))
+
+        print("Average pre-loop per Loop:")
+        for index, avg in enumerate(self.avg_preloop_per_loop):
+            print(str(index) + ": " + str(avg))
+
+        print("The loops:")
+        for index, loop in enumerate(self.list_loops):
+            print(str(index) + ":")
+            for state in loop:
+                print(state)
+
+#-----------------------------------------
 
 def run_test():
     test_runner = IATF_Feedback_Lab('random',
                  6,
-                 2,
+                 3,
                  500,
                  max_value=None,
-                 threshold=0.001,
+                 threshold=0.01,
                  constant_state=None)
 
     test_runner.run_it()
 
-    print(test_runner.num_unique_loops)
+    test_runner.print_status()
 
 
 if __name__ == '__main__':

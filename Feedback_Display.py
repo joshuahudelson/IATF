@@ -2,7 +2,8 @@ from IATF_Feedback_Lab import IATF_Feedback_Lab
 import copy
 
 class Feedback_Data:
-    """A class for collating/representing fed-back IATF runs.
+    """ A class for running multiple IATF_Feedback_Lab tests,
+        and collating the data for the Feedback_Test_GUI.
     """
 
     def __init__(self,
@@ -12,8 +13,40 @@ class Feedback_Data:
                  iters,
                  max_value=None,
                  threshold=0.1,
-                 constant_state=None
+                 constant_state=None,
+                 location_species='single_value',
+                 init_location=0
                  ):
+        """
+        start_point_species:
+                             Random: obvious
+
+                             All: if num_elems is small enough,
+                                  do all possible combinations up to max_value.
+
+                             Constant State: keep the initial state the same
+                                             and test different initial drivers.
+
+                            Patter: produce starting points based on some kind of
+                                    pattern.
+
+        self.list_num_elems: List of ints, one or more num_elems we want
+                             to test.
+
+        self.list_exps:      List of floats, one or more exponents we want
+                             to test.
+
+        self.iters:          Int, same as usual.
+
+        self.max_value:      maximum value any int in a starting point can be.
+
+        threshold:           Float, the percentage at which the lab will stop
+                             testing new points.  Calculated by:
+                             (number of unique loops)/(total number of runs)
+
+        constant_state:      List of ints, to be used if the constant_state
+                             species is chosen (some day).
+        """
 
         self.start_point_species = start_point_species
         self.list_num_elems = list_num_elems
@@ -23,13 +56,23 @@ class Feedback_Data:
         self.threshold = threshold
         self.constant_state = constant_state
 
-        self.the_Lab = None
-        self.list_of_multi_runs = [] # delete?
+#---------------------
+        """ Collate everything.  One big 2D array: num_elems by exps.
+
+            - the loops
+            - number of loops
+            - percentage of runs per loops
+            - average pre-length per loop
+            -
+
+
+        """
+
 
         self.loop_output_pattern = []
 
         self.mem_list_loops = []
-        self.mem_list_num_loops = []
+        self.mem_list_num_loops = [] # do I need this?  And what about other info, like pre-loop data?
 
     def run_it(self):
         for index_elems, num_elems in enumerate(self.list_num_elems):
@@ -62,9 +105,11 @@ class Feedback_Data:
                                          self.threshold,
                                          self.constant_state)
 
+
     def run_lab(self, index_elems, index_exp):
 
         self.the_Lab.run_it()
+
         # Need to add the elems and exp into current_list_of_runs (?), and also the stuff below...
         self.current_list_of_runs = self.the_Lab.list_of_runs # no real reason to copy this...
         self.list_loops = self.the_Lab.list_loops
@@ -173,8 +218,6 @@ def test():
     print()
     for key in new_feedback_data.loop_and_start_point_mean_differences.keys():
         print(key + ' : ' + str(new_feedback_data.loop_and_start_point_mean_differences[key]))
-#    for element in new_feedback_data.list_of_multi_runs[0][0]:
-#        print(str(element) + " : " + str(new_feedback_data.list_of_multi_runs[0][0][element]))
 
 
 if __name__=='__main__':
