@@ -1,4 +1,4 @@
-from tkinter import *
+from Tkinter import *
 from Feedback_Display import Feedback_Data
 
 class Feedback_Test_GUI:
@@ -33,8 +33,8 @@ class Feedback_Test_GUI:
         self.font_small = ('Times', 10)
         self.font_medium = ('Times', 11)
 
-        self.GRID_WIDTH = 5
-        self.GRID_HEIGHT = 10
+        self.GRID_WIDTH = 4
+        self.GRID_HEIGHT = 4
         self.NUM_LOOP_STATES = 10
         self.LOOP_STATES_LENGTH = 10
 
@@ -101,7 +101,7 @@ class Feedback_Test_GUI:
                 self.grid_labels[i][j].grid(row=j+10, column=i+1)
                 self.grid_labels[i][j].configure(width = 5, background="light gray")
 
-        self.custom_update.grid(row=21, column=1, columnspan=5)
+        self.custom_update.grid(row=17, column=1, columnspan=5)
 
         # RIGHT SIDE OF SCREEN -------------------------------------------------
 
@@ -226,6 +226,9 @@ class Feedback_Test_GUI:
                              str(self.FD.table_of_tests[self.curr_loc[0]]\
                                                        [self.curr_loc[1]]\
                                                        ['number unique loops']))
+        print(str(self.FD.table_of_tests[self.curr_loc[0]]\
+                                        [self.curr_loc[1]]\
+                                        ['runs per loop percentage']))
 
     def display_grid(self):
         """ In each grid box, display the number of unique loops
@@ -264,8 +267,8 @@ class Feedback_Test_GUI:
         self.curr_loc = (temp_xpos, temp_ypos)
 
     def get_entry_values(self):
+        print("Getting entry values...")
         for index, entry in enumerate(self.entries):
-            print("Getting entry values...")
             if self.names_entry_fields[index] == "Threshold":
                 self.entry_values[self.names_entry_fields[index]] = self.convert_string_to_float(entry.get())
             elif self.names_entry_fields[index] == "Number of Elements":
@@ -317,7 +320,8 @@ class Feedback_Test_GUI:
             being shown.
         """
         self.loop_counter = (self.loop_counter + 1) % self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['number unique loops']
-        self.current_loop.set("Current Loop: " + str(self.loop_counter))
+        self.current_loop.set("Current Loop: " + str(self.loop_counter) + "   "\
+                               + str(self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['runs per loop percentage'][self.loop_counter]*100) + "%")
         self.import_loop_states()
 
     def display_prev_loop(self):
@@ -330,7 +334,8 @@ class Feedback_Test_GUI:
 
     def zero_loop_counter(self):
        self.loop_counter = 0
-       self.current_loop.set("Current Loop: " + str(self.loop_counter))
+       self.current_loop.set("Current Loop: " + str(self.loop_counter) + "   "\
+                              + str(self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['runs per loop percentage'][self.loop_counter]*100) + "%")
        self.import_loop_states()
 
     # Conversion functions -----------------------------------------------------

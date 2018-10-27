@@ -54,7 +54,6 @@ class IATF_Feedback_Lab:
                       from each run (of an IATF_Runner), plus an int to
                       which loop in list_loops that run falls into.
 
-        replace with start-point-patterns...
         list_of_start_points:
                       List, numpy arrays describing the complete state
                       of an IATF object: current driver (int) and current
@@ -108,6 +107,8 @@ class IATF_Feedback_Lab:
         self.runs_per_loop = []
         self.runs_per_loop_per_total = []
 
+        self.loops_by_start_point_pattern = {}
+
         self.custom_update = custom_update
 
         # Ultimately remove:
@@ -138,7 +139,7 @@ class IATF_Feedback_Lab:
 
         # Need decision tree for different species.  So make check_condition() which returns a boolean to continue or not
 
-        while (len(self.list_loops)/run_counter > self.threshold) and (run_counter < self.max_length_list_start_points):
+        while (len(self.list_loops)/float(run_counter) > self.threshold) and (run_counter < self.max_length_list_start_points):
             self.do_one_run(run_counter)
 
             run_counter += 1
@@ -175,6 +176,15 @@ class IATF_Feedback_Lab:
         loop_index = my_IATF_Runner.loop_index
         loop_status = my_IATF_Runner.loop_status_boolean
 
+        temp_pattern = start_point_state
+        for entry in range(len(temp_pattern)-1):
+            temp_pattern[entry] = temp_pattern[entry+1] - temp_pattern[entry]
+            if temp_pattern[entry] > 0:
+                temp_pattern[entry] = 1
+            elif temp_pattern[entry] < 0:
+                temp_pattern[entry] = -1
+        temp_pattern = temp_pattern[:len(temp_pattern)-1]
+
         if loop_status is False:
             self.num_looping_vs_not[1] += 1
             the_loop = [None]
@@ -185,13 +195,17 @@ class IATF_Feedback_Lab:
             the_loop = my_IATF_Runner.list_states[loop_index:]
             len_pre_loop = len(my_IATF_Runner.list_states[:loop_index])
             loop_number = self.check_add_loop_list(the_loop, len_pre_loop)
+            if temp_pattern in self.loops_by_start_point_pattern.keys():
+                self.loops_by_start_point_pattern[str(temp_pattern)][0].append(loop_number)
+            else:
+                self.loops_by_start_point_pattern[str(temp_pattern)] = [[loop_number], temp_pattern]
 
         pre_loop = my_IATF_Runner.list_states[:loop_index]
 
-        # need: start-point patters
 
         self.list_of_runs.append({'run_index':index,
                                   'start_point':self.list_of_start_points[current_index],
+                                  'start_point_pattern': temp_pattern,
                                   'the_loop':the_loop,
                                   'pre_loop':pre_loop,
                                   'loop_index':loop_index,
@@ -229,7 +243,6 @@ class IATF_Feedback_Lab:
                 ' vs. ' + str(len(self.list_of_start_points)))
                 temp_start_point = self.generate_random_start_point()
 
-            #self.list_of_start_points.append(copy.deepcopy(temp_start_point))
             return(copy.deepcopy(temp_start_point))
 
         else:
@@ -280,7 +293,7 @@ class IATF_Feedback_Lab:
             self.avg_preloop_per_loop[index] = float(self.avg_preloop_per_loop[index])/self.runs_per_loop[index]
 
         for sum2 in self.runs_per_loop:
-            self.runs_per_loop_per_total.append(sum2/self.number_of_runs_completed)
+            self.runs_per_loop_per_total.append(sum2/float(self.number_of_runs_completed))  #changed to float
 
 
     def print_status(self):
@@ -309,15 +322,32 @@ class IATF_Feedback_Lab:
             for state in loop:
                 print(state)
 
+        print("Loops by Start Point Patterns:")
+        loop_pattern_sums = []
+        for loop in range(self.num_unique_loops):
+            running_sum = None
+            for entry in self.loops_by_start_point_pattern:
+                if self.loops_by_start_point_pattern[entry][0][0] == loop:
+                    #print(str(entry) + ': ' + str(self.loops_by_start_point_pattern[entry][0][0]))
+                    if running_sum == None:
+                        running_sum = self.loops_by_start_point_pattern[entry][1]
+                    else:
+                        running_sum = [running_sum[x] + self.loops_by_start_point_pattern[entry][1][x] for x in range(len(running_sum))]
+            loop_pattern_sums.append(running_sum)
+        print("-----")
+        for loop in range(len(loop_pattern_sums)):
+            print("Loop " + str(loop) + ": " + str(loop_pattern_sums[loop]))
+
+
 #-----------------------------------------
 
 def run_test():
     test_runner = IATF_Feedback_Lab('random',
-                 6,
-                 3,
+                 5,
+                 2,
                  500,
                  max_value=None,
-                 threshold=0.01,
+                 threshold=0.0001,
                  constant_state=None)
 
     test_runner.run_it()
