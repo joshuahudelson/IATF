@@ -176,14 +176,14 @@ class IATF_Feedback_Lab:
         loop_index = my_IATF_Runner.loop_index
         loop_status = my_IATF_Runner.loop_status_boolean
 
-        temp_pattern = start_point_state
-        for entry in range(len(temp_pattern)-1):
-            temp_pattern[entry] = temp_pattern[entry+1] - temp_pattern[entry]
+        temp_pattern_aux = start_point_state
+        temp_pattern = []
+        for entry in range(len(temp_pattern_aux)-1):
+            temp_pattern.append(temp_pattern_aux[entry+1] - temp_pattern_aux[entry])
             if temp_pattern[entry] > 0:
                 temp_pattern[entry] = 1
             elif temp_pattern[entry] < 0:
                 temp_pattern[entry] = -1
-        temp_pattern = temp_pattern[:len(temp_pattern)-1]
 
         if loop_status is False:
             self.num_looping_vs_not[1] += 1
