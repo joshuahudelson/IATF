@@ -108,6 +108,7 @@ class IATF_Feedback_Lab:
         self.runs_per_loop_per_total = []
 
         self.loops_by_start_point_pattern = {}
+        self.loop_pattern_sums = []
 
         self.custom_update = custom_update
 
@@ -295,6 +296,17 @@ class IATF_Feedback_Lab:
         for sum2 in self.runs_per_loop:
             self.runs_per_loop_per_total.append(sum2/float(self.number_of_runs_completed))  #changed to float
 
+        for loop in range(self.num_unique_loops):
+            running_sum = None
+            for entry in self.loops_by_start_point_pattern:
+                for i in range(len(self.loops_by_start_point_pattern[entry][0])):
+                    if self.loops_by_start_point_pattern[entry][0][i] == loop:
+                        if running_sum == None:
+                            running_sum = self.loops_by_start_point_pattern[entry][1]
+                        else:
+                            running_sum = [running_sum[x] + self.loops_by_start_point_pattern[entry][1][x] for x in range(len(running_sum))]
+            self.loop_pattern_sums.append(running_sum)
+
 
     def print_status(self):
 
@@ -323,20 +335,8 @@ class IATF_Feedback_Lab:
                 print(state)
 
         print("Loops by Start Point Patterns:")
-        loop_pattern_sums = []
-        for loop in range(self.num_unique_loops):
-            running_sum = None
-            for entry in self.loops_by_start_point_pattern:
-                if self.loops_by_start_point_pattern[entry][0][0] == loop:
-                    #print(str(entry) + ': ' + str(self.loops_by_start_point_pattern[entry][0][0]))
-                    if running_sum == None:
-                        running_sum = self.loops_by_start_point_pattern[entry][1]
-                    else:
-                        running_sum = [running_sum[x] + self.loops_by_start_point_pattern[entry][1][x] for x in range(len(running_sum))]
-            loop_pattern_sums.append(running_sum)
-        print("-----")
-        for loop in range(len(loop_pattern_sums)):
-            print("Loop " + str(loop) + ": " + str(loop_pattern_sums[loop]))
+        for loop in range(len(self.loop_pattern_sums)):
+            print("Loop " + str(loop) + ": " + str(self.loop_pattern_sums[loop]))
 
 
 #-----------------------------------------

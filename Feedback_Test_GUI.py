@@ -110,11 +110,13 @@ class Feedback_Test_GUI:
         self.exp_in_this_test = StringVar()
         self.num_u_loops = StringVar()
         self.current_loop = StringVar()
+        self.current_loop_pattern_sum = StringVar()
 
         self.elems_in_this_test.set("Element: __")
         self.exp_in_this_test.set("Exponent: __")
         self.num_u_loops.set("Unique Loops: __")
         self.current_loop.set("Current Loop: 0")
+        self.current_loop_pattern_sum.set("Pattern Sum...")
 
         # Create the labels and buttons
         self.label_elems_in_this_test = Label(master,
@@ -131,6 +133,10 @@ class Feedback_Test_GUI:
         self.label_current_loop = Label(master,
                                         font=self.font,
                                         textvariable=self.current_loop)
+
+        self.label_current_loop_pattern_sum = Label(master,
+                                                    font=self.font,
+                                                    textvariable=self.current_loop_pattern_sum)
 
         self.next_test_button = Button(master, text="Next Test", command= lambda : self.display_next_test())
         self.prev_test_button = Button(master, text="Prev. Test", command= lambda : self.display_prev_test())
@@ -152,8 +158,9 @@ class Feedback_Test_GUI:
         self.prev_test_button.grid(row=2, column=6)
         self.label_unique_loops.grid(row=3, column=6, columnspan=2)
         self.label_current_loop.grid(row=5, column=6, columnspan=2)
-        self.next_loop_button.grid(row=6, column=7)
-        self.prev_loop_button.grid(row=6, column=6)
+        self.label_current_loop_pattern_sum.grid(row=6, column=6, columnspan=2)
+        self.next_loop_button.grid(row=7, column=7)
+        self.prev_loop_button.grid(row=7, column=6)
 
         for index, label in enumerate(self.loop_states_labels):
             label.grid(row=index+9, column = 7, columnspan=3)
@@ -322,6 +329,9 @@ class Feedback_Test_GUI:
         self.loop_counter = (self.loop_counter + 1) % self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['number unique loops']
         self.current_loop.set("Current Loop: " + str(self.loop_counter) + "   "\
                                + str(self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['runs per loop percentage'][self.loop_counter]*100) + "%")
+
+        self.current_loop_pattern_sum.set(str(self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['loop pattern sums'][self.loop_counter]))
+
         self.import_loop_states()
 
     def display_prev_loop(self):
@@ -330,6 +340,7 @@ class Feedback_Test_GUI:
         """
         self.loop_counter = (self.loop_counter - 1) % self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['number unique loops']
         self.current_loop.set("Current Loop: " + str(self.loop_counter))
+        self.current_loop_pattern_sum.set(str(self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['loop pattern sums'][self.loop_counter]))
         self.import_loop_states()
 
     def zero_loop_counter(self):

@@ -94,7 +94,8 @@ class Feedback_Data:
                      'lengths unique loops' : self.the_Lab.lens_unique_loops,
                      'average preloop per loop' : self.the_Lab.avg_preloop_per_loop,
                      'runs per loop' : self.the_Lab.runs_per_loop,
-                     'runs per loop percentage' : self.the_Lab.runs_per_loop_per_total}
+                     'runs per loop percentage' : self.the_Lab.runs_per_loop_per_total,
+                     'loop pattern sums' : self.the_Lab.loop_pattern_sums}
 
         self.table_of_tests[index_elems].append(temp_dict)
 
