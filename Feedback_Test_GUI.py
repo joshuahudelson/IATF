@@ -339,7 +339,8 @@ class Feedback_Test_GUI:
             being shown.  (But this doesn't show the loop yet, does it??)
         """
         self.loop_counter = (self.loop_counter - 1) % self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['number unique loops']
-        self.current_loop.set("Current Loop: " + str(self.loop_counter))
+        self.current_loop.set("Current Loop: " + str(self.loop_counter) + "   "\
+                               + str(self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['runs per loop percentage'][self.loop_counter]*100) + "%")
         self.current_loop_pattern_sum.set(str(self.FD.table_of_tests[self.curr_loc[0]][self.curr_loc[1]]['loop pattern sums'][self.loop_counter]))
         self.import_loop_states()
 
